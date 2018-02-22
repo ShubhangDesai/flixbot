@@ -8,6 +8,7 @@
 ######################################################################
 import csv
 import math
+from PorterStemmer import PorterStemmer as ps
 
 import numpy as np
 
@@ -25,6 +26,7 @@ class Chatbot:
       self.binarize()
       self.user_vector = [0.] * 9125
       self.data_points = 0
+      self.p = ps()
 
     def greeting(self):
       """chatbot greeting message"""
@@ -55,19 +57,24 @@ class Chatbot:
 
         neg_count, pos_count = 0, 0
         for word in input.split(' '):
+            word = self.p.stem(word)
             if word in self.sentiment:
                 if self.sentiment[word] == 'pos':
                     pos_count += 1
                 else:
                     neg_count += 1
-
         sentiment = 1.0 if pos_count >= neg_count else -1.0
         return movie, sentiment
 
     def update_user_vector(self, movie, sentiment):
         found_title = False
         i = 0
-        print self.data_points
+        firstWord = movie.split()[0]
+        lastWordInd = movie.index(movie.split()[-1])
+        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
+            movie = movie.split(' ', 1)[1]
+        print movie
         for i, title in enumerate(self.titles):
             if title[0] == movie:
                 found_title = True
