@@ -27,6 +27,9 @@ class Chatbot:
       self.user_vector = [0.] * 9125
       self.data_points = 0
       self.p = ps()
+      
+      self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
+
 
     def greeting(self):
       """chatbot greeting message"""
@@ -54,16 +57,27 @@ class Chatbot:
         first_quote = input.find('\"') + 1
         second_quote = first_quote + input[first_quote:].find('\"')
         movie = input[first_quote:second_quote]
-
-        neg_count, pos_count = 0, 0
+        input = input[:first_quote-2] + input[second_quote+1:]
+        if movie not in self.titleSet:
+            return "NO_TITLE", 0.0
+        
+        pos_neg_count = 0
+        inv = 1
         for word in input.split(' '):
             word = self.p.stem(word)
+            if word in self.negateSet:
+                inv *= -1
             if word in self.sentiment:
                 if self.sentiment[word] == 'pos':
-                    pos_count += 1
+                    pos_neg_count += 1 * inv
                 else:
-                    neg_count += 1
-        sentiment = 1.0 if pos_count >= neg_count else -1.0
+                    pos_neg_count -= 1 * inv
+        if pos_neg_count > 0.0:
+            sentiment = 1.0
+        elif pos_neg_count < 0.0:
+            sentiment = -1.0
+        else:
+            sentiment = 0.0
         return movie, sentiment
 
     def update_user_vector(self, movie, sentiment):
@@ -74,7 +88,6 @@ class Chatbot:
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
             movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
             movie = movie.split(' ', 1)[1]
-        print movie
         for i, title in enumerate(self.titles):
             if title[0] == movie:
                 found_title = True
@@ -102,9 +115,13 @@ class Chatbot:
           movie, sentiment = self.get_movie_and_sentiment(input)
           if not movie:
               response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
+          elif movie == 'NO_TITLE':
+              response = 'Sorry, I\'m not familiar with that title.'
+          elif sentiment == 0.0:
+              response = 'I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently?.'
+              response = response % movie
           else:
               self.update_user_vector(movie, sentiment)
-
               response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
               response = response % movie
               if self.data_points < 5:
@@ -127,6 +144,7 @@ class Chatbot:
       # The values stored in each row i and column j is the rating for
       # movie i by user j
       self.titles, self.ratings = ratings()
+      self.titleSet = set(item[0] for item in self.titles) #don't want to deal with binary search
       reader = csv.reader(open('data/sentiment.txt', 'rb'))
       self.sentiment = dict(reader)
 
