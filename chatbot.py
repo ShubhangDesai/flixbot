@@ -67,6 +67,7 @@ class Chatbot:
     def update_user_vector(self, movie, sentiment):
         found_title = False
         i = 0
+        print self.data_points
         for i, title in enumerate(self.titles):
             if title[0] == movie:
                 found_title = True
@@ -103,7 +104,8 @@ class Chatbot:
                   response += 'Tell me about another movie you have seen.'
               else:
                   response += 'That\'s enough for me to make a recommendation.'
-                  # TODO: make recommendation
+                  recommend(self.user_vector)
+                  response += 'You should watch ' + user_vector[0]
 
       return response
 
@@ -130,19 +132,29 @@ class Chatbot:
 
     def distance(self, u, v):
       """Calculates a given distance function between vectors u and v"""
-      # TODO: Implement the distance function between vectors u and v]
-      # Note: you can also think of this as computing a similarity measure
-
-      pass
+      dis = 0.0
+      uTotal = 0.0
+      vTotal = 0.0
+      combTotal = 0.0
+      for i, val1 in enumerate(u):
+          uTotal += u[i] * u[i]
+          vTotal += v[i] * v[i]
+          combTotal += u[i] * v[i]
+      return combTotal/((uTotal*vTotal)**.5)
 
 
     def recommend(self, u):
       """Generates a list of movies based on the input vector u using
       collaborative filtering"""
-      # TODO: Implement a recommendation function that takes a user vector u
-      # and outputs a list of movies recommended by the chatbot
-
-      pass
+      similarities = {}
+      for i, movie in enumerate(u):
+        sum = 0
+        if movie == 0:
+          for j, other_movie in enumerate(u):
+            if other_movie != 0:
+              sum+=other_movie*distance(self.ratings[i],self.ratings[j])
+          similarities[i]=sum
+      return sorted(similarities, key = lambda k: -similarities[k])
 
 
     #############################################################################
