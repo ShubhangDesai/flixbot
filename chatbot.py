@@ -18,8 +18,10 @@ class Chatbot:
 
     def __init__(self, is_turbo=False):
       self.name = 'flixbot'
+      self.threshold = 3.0
       self.is_turbo = is_turbo
       self.read_data()
+      self.binarize()
       self.user_vector = [0.] * 9125
       self.data_points = 0
 
@@ -50,9 +52,15 @@ class Chatbot:
         second_quote = first_quote + input[first_quote:].find('\"')
         movie = input[first_quote:second_quote]
 
-        # TODO: sentiment analysis
-        sentiment = 5.0
+        neg_count, pos_count = 0, 0
+        for word in input.split(' '):
+            if word in self.sentiment:
+                if self.sentiment[word] == 'pos':
+                    pos_count += 1
+                else:
+                    neg_count += 1
 
+        sentiment = 1.0 if pos_count >= neg_count else -1.0
         return movie, sentiment
 
     def update_user_vector(self, movie, sentiment):
@@ -88,7 +96,7 @@ class Chatbot:
           else:
               self.update_user_vector(movie, sentiment)
 
-              response = 'Glad to hear you liked \"%s\"! ' if sentiment >= 2.5 else 'Sorry you didn\'t like \"%s\". '
+              response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
               response = response % movie
               if self.data_points < 5:
                   response += 'Tell me about another movie you have seen.'
@@ -111,15 +119,12 @@ class Chatbot:
       self.titles, self.ratings = ratings()
       reader = csv.reader(open('data/sentiment.txt', 'rb'))
       self.sentiment = dict(reader)
-      print(len(self.titles), self.titles)
-      print(len(self.ratings), self.ratings)
-      print(self.sentiment)
 
 
     def binarize(self):
       """Modifies the ratings matrix to make all of the ratings binary"""
-
-      pass
+      self.ratings[(self.ratings < self.threshold) & (self.ratings != 0.0)] = -1.0
+      self.ratings[self.ratings >= self.threshold] = 1.0
 
 
     def distance(self, u, v):
