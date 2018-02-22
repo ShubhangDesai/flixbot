@@ -4,6 +4,7 @@
 # PA6, CS124, Stanford, Winter 2018
 # v.1.0.2
 # Original Python code by Ignacio Cases (@cases)
+# Koooooby Shoob Kaylie
 ######################################################################
 import csv
 import math
