@@ -135,7 +135,7 @@ class Chatbot:
       """Modifies the ratings matrix to make all of the ratings binary"""
       self.ratings[(self.ratings < self.threshold) & (self.ratings != 0.0)] = -1.0
       self.ratings[self.ratings >= self.threshold] = 1.0
-
+      self.ratings = np.array(self.ratings)
 
     def distance(self, u, v):
       """Calculates a given distance function between vectors u and v"""
@@ -148,20 +148,21 @@ class Chatbot:
           vTotal += v[i] * v[i]
           combTotal += u[i] * v[i]
       return combTotal/((uTotal*vTotal)**.5)
-
-
+  
     def recommend(self, u):
-      """Generates a list of movies based on the input vector u using
-      collaborative filtering"""
-      similarities = {}
-      for i, movie in enumerate(u):
-        sum = 0
-        if movie == 0:
-          for j, other_movie in enumerate(u):
-            if other_movie != 0:
-              sum+=other_movie*distance(self.ratings[i],self.ratings[j])
-          similarities[i]=sum
-      return sorted(similarities, key = lambda k: -similarities[k])
+        """Generates a list of movies based on the input vector u using
+        collaborative filtering"""
+        watched = np.where(u != 0.0)[0]
+
+        watched_movies = self.ratings[watched]
+        norm = np.matmul(np.linalg.norm(self.ratings, axis=1).reshape(-1, 1),
+                         np.linalg.norm(watched_movies, axis=1).reshape(1, -1))
+        numer = np.matmul(self.ratings, watched_movies.T)
+        similarities = [[numer[i, j] / norm[i, j] if norm[i, j] != 0 else 0.0 for j in range(len(watched))] for i in range(len(u))]
+        rankings = np.argsort(np.sum(similarities, axis=1))
+        rankings = [ranking for ranking in rankings if ranking not in watched]
+
+        return rankings
 
 
     #############################################################################
