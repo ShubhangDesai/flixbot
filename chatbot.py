@@ -8,6 +8,7 @@
 ######################################################################
 import csv
 import math
+import random
 from PorterStemmer import PorterStemmer as ps
 
 import numpy as np
@@ -98,6 +99,20 @@ class Chatbot:
                 self.data_points += 1
             self.user_vector[i] = sentiment
 
+    #gets random response based on sentiment and movie
+    def getResponse(self, sentiment):
+      neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
+      posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, \"%s\" was a great movie! ', 'I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'Yea, I\'d give \"%s\" at least a 10/10, it was great! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ']
+      negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      if sentiment == 0.0:
+          response = random.sample(neutralSet, 1)[0]
+      else:
+        if sentiment == 1.0:
+            response = random.sample(posSet, 1)[0]
+        else:
+            response = random.sample(negSet, 1)[0]
+      return response
+
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
       that
@@ -118,12 +133,11 @@ class Chatbot:
           elif movie == 'NO_TITLE':
               response = 'Sorry, I\'m not familiar with that title.'
           elif sentiment == 0.0:
-              response = 'I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently?.'
-              response = response % movie
+              response = self.getResponse(sentiment) % movie
           else:
               self.update_user_vector(movie, sentiment)
               response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
-              response = response % movie
+              response = self.getResponse(sentiment) % movie
               if self.data_points < 5:
                   response += 'Tell me about another movie you have seen.'
               else:
