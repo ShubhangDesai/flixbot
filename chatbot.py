@@ -53,16 +53,24 @@ class Chatbot:
 
     def get_movie_and_sentiment(self, input):
         if input.count('\"') != 2:
-            return None, None
+            return None, None, None
 
         first_quote = input.find('\"') + 1
         second_quote = first_quote + input[first_quote:].find('\"')
         movie = input[first_quote:second_quote]
         input = input[:first_quote-2] + input[second_quote+1:]
+        orig_movie = movie #before article handling, readable version
+
+        firstWord = movie.split()[0]
+        lastWordInd = movie.index(movie.split()[-1])
+        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
+            movie = movie.split(' ', 1)[1]  #after article handling, if needed
+
         if movie not in self.titleSet:
-            return "NO_TITLE", 0.0
+            return "NO_TITLE", "NO_TITLE", 0.0
         
-        pos_neg_count = 0
+        pos_neg_count, sentiment = 0, 0.0
         inv = 1
         for word in input.split(' '):
             word = self.p.stem(word)
@@ -79,16 +87,11 @@ class Chatbot:
             sentiment = -1.0
         else:
             sentiment = 0.0
-        return movie, sentiment
+        return orig_movie, movie, sentiment
 
     def update_user_vector(self, movie, sentiment):
         found_title = False
         i = 0
-        firstWord = movie.split()[0]
-        lastWordInd = movie.index(movie.split()[-1])
-        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-            movie = movie.split(' ', 1)[1]
         for i, title in enumerate(self.titles):
             if title[0] == movie:
                 found_title = True
@@ -127,7 +130,7 @@ class Chatbot:
       if self.is_turbo == True:
         response = 'processed %s in creative mode!!' % input
       else:
-          movie, sentiment = self.get_movie_and_sentiment(input)
+          orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
           if not movie:
               response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
           elif movie == 'NO_TITLE':
@@ -135,15 +138,14 @@ class Chatbot:
           elif sentiment == 0.0:
               response = self.getResponse(sentiment) % movie
           else:
-              self.update_user_vector(movie, sentiment)
-              response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
-              response = self.getResponse(sentiment) % movie
+              self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+              # response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
+              response = self.getResponse(sentiment) % orig_movie #uses human-readable, non-article-handled "The X" version for readability
               if self.data_points < 5:
                   response += 'Tell me about another movie you have seen.'
               else:
                   response += 'That\'s enough for me to make a recommendation.'
-                  recommend(self.user_vector)
-                  response += 'You should watch ' + user_vector[0]
+                  response += 'You should watch ' + self.recommend(self.user_vector)[0]
 
       return response
 
@@ -192,8 +194,7 @@ class Chatbot:
         numer = np.matmul(self.ratings, watched_movies.T)
         similarities = [[numer[i, j] / norm[i, j] if norm[i, j] != 0 else 0.0 for j in range(len(watched))] for i in range(len(u))]
         rankings = np.argsort(np.sum(similarities, axis=1))
-        rankings = [ranking for ranking in rankings if ranking not in watched]
-
+        rankings = [self.titles[ranking][0] for ranking in rankings if ranking not in watched]
         return rankings
 
 
