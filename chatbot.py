@@ -21,13 +21,13 @@ class Chatbot:
 
     def __init__(self, is_turbo=False):
       self.name = 'flixbot'
+      self.p = ps()
       self.threshold = 3.0
       self.is_turbo = is_turbo
       self.read_data()
       self.binarize()
       self.user_vector = [0.] * 9125
       self.data_points = 0
-      self.p = ps()
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
 
@@ -162,7 +162,11 @@ class Chatbot:
       self.titles, self.ratings = ratings()
       self.titleSet = set(item[0] for item in self.titles) #don't want to deal with binary search
       reader = csv.reader(open('data/sentiment.txt', 'rb'))
-      self.sentiment = dict(reader)
+      tempSentiment = dict(reader)
+      self.sentiment = {}
+      for key, value in tempSentiment.iteritems():
+          self.sentiment[self.p.stem(key)] = value
+    
 
 
     def binarize(self):
