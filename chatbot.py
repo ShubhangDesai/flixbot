@@ -145,7 +145,8 @@ class Chatbot:
                   response += 'Tell me about another movie you have seen.'
               else:
                   response += 'That\'s enough for me to make a recommendation.'
-                  response += 'You should watch ' + self.recommend(self.user_vector)[0]
+                  currRec = self.recommend(self.user_vector)
+                  response += 'You should watch ' + currRec[0] + ' or maybe ' + currRec[1] + '. You might also like ' + currRec[2] + '!'
 
       return response
 
