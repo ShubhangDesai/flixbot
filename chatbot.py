@@ -20,6 +20,7 @@ class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
 
     def __init__(self, is_turbo=False):
+      self.prevRec = set([])
       self.name = 'flixbot'
       self.p = ps()
       self.threshold = 3.0
@@ -28,6 +29,8 @@ class Chatbot:
       self.binarize()
       self.user_vector = [0.] * 9125
       self.data_points = 0
+      self.recommendingMovies = False
+      self.numRecs = 0
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
 
@@ -127,26 +130,46 @@ class Chatbot:
       # calling other functions. Although modular code is not graded, it is       #
       # highly recommended                                                        #
       #############################################################################
+      response = ''
       if self.is_turbo == True:
         response = 'processed %s in creative mode!!' % input
       else:
           orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
-          if not movie:
-              response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
-          elif movie == 'NO_TITLE':
-              response = 'Sorry, I\'m not familiar with that title.'
-          elif sentiment == 0.0:
-              response = self.getResponse(sentiment) % movie
-          else:
-              self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
-              # response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
-              response = self.getResponse(sentiment) % orig_movie #uses human-readable, non-article-handled "The X" version for readability
-              if self.data_points < 5:
-                  response += 'Tell me about another movie you have seen.'
+          maybe = False
+          if self.data_points >= 5:
+              if input.lower() == 'no' or self.numRecs >= 5:
+                  #keeping previous sentiment
+                  self.data_points = 0
+                  self.numRecs = 0
+                  response = "Okay! Tell me more about movies!"
+                  return response
+              elif input.lower() != 'yes':
+                  response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
+                  maybe = True
+          if self.data_points < 5:
+              if not movie:
+                  response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
+              elif movie == 'NO_TITLE':
+                  response = 'Sorry, I\'m not familiar with that title.'
+              elif sentiment == 0.0:
+                  response = self.getResponse(sentiment) % movie
               else:
-                  response += 'That\'s enough for me to make a recommendation.'
-                  currRec = self.recommend(self.user_vector)
-                  response += 'You should watch ' + currRec[0] + ' or maybe ' + currRec[1] + '. You might also like ' + currRec[2] + '!'
+                  self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+                  # response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
+                  response = self.getResponse(sentiment) % orig_movie #uses human-readable, non-article-handled "The X" version for readability
+                  if self.data_points < 5:
+                      response += 'Tell me about another movie you have seen.'
+          if self.data_points >= 5 and not maybe:
+              response += '\nThat\'s enough for me to make a recommendation.'
+              currRec = self.recommend(self.user_vector)
+              for rec in currRec:
+                  if rec not in self.prevRec:
+                      response += '\nYou should watch ' + rec + '.'
+                      self.prevRec.add(rec)
+                      self.numRecs += 1
+                      break
+              response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
+              
 
       return response
 
