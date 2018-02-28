@@ -55,25 +55,48 @@ class Chatbot:
     # 2. Modules 2 and 3: extraction and transformation                         #
     #############################################################################
 
-    ##extracts movie without quotes and returns input without movie
-    ##needs to be input full movie without year
+    def is_a_movie(self, title):
+        if title in self.titleDict.keys():
+            return title + " (" + self.titleDict[title][0] + ")"
+        return None
+
+    ##returns title and input(with title extracted)
+    ##     example: I like Titanic a lot -> Titanic (1997), I like a lot
+    ##returns first moive, so consider recalling it w just input
+    ##for disambiguate, consider returning flag for input since input is not needed
+    ##     example
     def extract_movie(self, input):
+        if input.count('\"') == 2:
+            first_quote = input.find('\"') + 1
+            second_quote = first_quote + input[first_quote:].find('\"')
+            movie = input[first_quote:second_quote]
+            input = input[:first_quote-2] + input[second_quote+1:]
+            return movie, input
         pat = re.compile('([A-Z])')
-        for m in p.finditer(input):
-            print m
-            pass
-        print 'FUCK'
-        print matches
+        for m in pat.finditer(input):
+            titleTest = input[m.start():]
+            titleTest += ' '
+            while " " in titleTest:
+                titleTest = titleTest.rsplit(' ', 1)[0]
+                firstWord = titleTest.split()[0]
+                if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+                    titleTest = titleTest + ', ' + firstWord
+                    titleTest = titleTest.split(' ', 1)[1]  #after article handling, if needed
+                    print titleTest
+                fullTitle = self.is_a_movie(titleTest)
+                if fullTitle:
+                    if m.start() + len(titleTest) >= len(input):
+                        return fullTitle, input[:m.start()-1]
+                    else:
+                        return fullTitle, input[:m.start()-1] + input[m.start()+len(titleTest)]
+        return None, None
+                
         
     def get_movie_and_sentiment(self, input):
-        self.extract_movie(input)
-        if input.count('\"') != 2:
+        movie, input = self.extract_movie(input)
+        if not movie and not input:
             return None, None, None
 
-        first_quote = input.find('\"') + 1
-        second_quote = first_quote + input[first_quote:].find('\"')
-        movie = input[first_quote:second_quote]
-        input = input[:first_quote-2] + input[second_quote+1:]
         orig_movie = movie #before article handling, readable version
 
         firstWord = movie.split()[0]
