@@ -255,30 +255,34 @@ class Chatbot:
       self.ratings = np.array(self.ratings)
 
     def distance(self, u, v):
-      """Calculates a given distance function between vectors u and v"""
-      dis = 0.0
-      uTotal = 0.0
-      vTotal = 0.0
-      combTotal = 0.0
-      for i, val1 in enumerate(u):
-          uTotal += u[i] * u[i]
-          vTotal += v[i] * v[i]
-          combTotal += u[i] * v[i]
-      return combTotal/((uTotal*vTotal)**.5)
+        """Calculates a given distance function between vectors u and v"""
+        numer = np.dot(u, v)
+        denom = np.sqrt(np.sum(u**2)) * np.sqrt(np.sum(v**2))
+
+        return numer / denom if denom != 0 else 0.0
   
     def recommend(self, u):
         """Generates a list of movies based on the input vector u using
         collaborative filtering"""
+        u = np.array(u)
         watched = np.where(u != 0.0)[0]
-        
-        watched_movies = self.ratings[watched]
-        norm = np.matmul(np.linalg.norm(self.ratings, axis=1).reshape(-1, 1),
-                         np.linalg.norm(watched_movies, axis=1).reshape(1, -1))
-        numer = np.matmul(self.ratings, watched_movies.T)
-        similarities = [[numer[i, j] / norm[i, j] if norm[i, j] != 0 else 0.0 for j in range(len(watched))] for i in range(len(u))]
-        rankings = np.argsort(np.sum(similarities, axis=1))
-        rankings = [self.titles[ranking][0] for ranking in rankings if ranking not in watched]
-        return rankings
+        scores = np.zeros(self.ratings.shape[0])
+
+        for i in range(self.ratings.shape[0]):
+            if i in watched:
+                continue
+
+            for j in watched:
+                scores[i] += u[j] * self.distance(self.ratings[i], self.ratings[j])
+
+        recommend_rankings = list(np.argsort(scores)[::-1])
+        for j in watched:
+            recommend_rankings.remove(j)
+
+        recommendations = np.array(self.titles)[np.array(recommend_rankings)]
+        recommendations = [recommendation[0] for recommendation in recommendations]
+
+        return recommendations
 
 
     #############################################################################
