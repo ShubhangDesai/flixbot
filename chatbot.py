@@ -11,6 +11,7 @@ import math
 import random
 from PorterStemmer import PorterStemmer as ps
 import re
+import string
 
 import numpy as np
 
@@ -35,8 +36,15 @@ class Chatbot:
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
 
-      self.overstSet = set(['above', 'absolute', 'abundance', 'actual', 'again', 'always', 'assuredly', 'astonish', 'atrocious', 'audacious', 'authentic', 'avid', 'blatant', 'brilliant', 'brutality', 'CONTINUE THIS'])
+      self.overstSet = set(['above', 'absolute', 'absolutely', 'abundance', 'abundantly', 'actual', 'actually', 'always', 'assuredly', 'astonishingly', 'atrociously', 'audaciously', 'authentic', 'avid', 'blatant', 'blatantly', 'brilliant', 'brilliantly', 'clear', 'clearly', 'especially', 'countless', 'decadent', 'decadence', 'deluge', 'deep', 'decisive', 'definite', 'essential', 'exceed', 'excess', 'excessive', 'extra', 'extensive', 'extraordinary', 'extreme', 'flagrant', 'focal', 'foremost', 'frequent', 'fundamental', 'gross', 'impressive', 'incontestability', 'indispensable', 'indisputable', 'infallible', 'indispensible', 'invariably', 'irrefutable', 'just', 'literally', 'notable', 'numerous', 'often', 'outright', 'overly', 'particularly', 'peerless', 'really', 'purely', 'rather', 'realiability', 'robust', 'readily', 'so', 'undeniable', 'unfailing', 'unquestionable', 'unwavering', 'uppermost', 'very'])
 
+      self.posSet = set()
+      for word in ['good', 'great', 'awesome', 'cool', 'love', 'loved', 'bomb', 'bomb.com', 'sick', 'dope', 'gr8', 'dank', 'favorite', 'best', 'ultimate', 'masterpiece', 'amazing', 'slick', 'fave', '10/10', 'wild', 'shook', 'beautiful', 'stunning', 'wonderful', 'woundrous', 'majestic', 'excellent', 'grand', 'outstanding', 'remarkable', 'chief', 'capital', 'superior', 'suberb', 'berb', 'birb', 'principal', 'royal', 'exalted', 'admire']:
+          self.posSet.add(self.p.stem(word))
+
+      self.negSet = set()
+      for word in ['awful', 'horrible', 'bad', 'worst', 'broken', 'terrible', 'appalling', 'atrocious', 'depressing', 'dire', 'disgusting', 'dreadful', 'nasty', '0/10', 'unpleasant', 'abominable', 'deplorable', 'gross', 'offensive', 'abhorrent', 'loathsome', 'abhor', 'despise', 'detest', 'loathe', 'shun', 'curse', 'nope', 'nopetrain']:
+          self.negSet.add(self.p.stem(word))
 
     def greeting(self):
       """chatbot greeting message"""
@@ -89,6 +97,9 @@ class Chatbot:
                 firstWord = titleTest.split()[0]
                 fullTitle = self.is_a_movie(titleTest)
                 if not fullTitle:
+                    titleTest = titleTest.translate(None, string.punctuation)
+                    fullTitle = self.is_a_movie(titleTest)
+                if not fullTitle:
                     if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
                         titleTest = titleTest + ', ' + firstWord
                         titleTest = titleTest.split(' ', 1)[1]  #after article handling, if needed
@@ -97,7 +108,7 @@ class Chatbot:
                     if m.start() + len(titleTest) >= len(input):
                         return fullTitle, input[:m.start()-1]
                     else:
-                        return fullTitle, input[:m.start()-1] + input[m.start()+len(titleTest)]
+                        return fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):]
         return None, None
                 
         
@@ -118,22 +129,29 @@ class Chatbot:
         
         pos_neg_count, sentiment = 0, 0.0
         inv = 1
+        mult = 1
         for word in input.split(' '):
+            word = word.translate(None, string.punctuation)
+            if word in self.overstSet:
+                mult += 1
             word = self.p.stem(word)
             if word in self.negateSet:
                 inv *= -1
+            if word in self.posSet:
+                pos_neg_count += 1 * inv * mult
+            if word in self.negSet:
+                pos_neg_count -= 1 * inv * mult
             if word in self.sentiment:
                 if self.sentiment[word] == 'pos':
-                    pos_neg_count += 1 * inv
+                    pos_neg_count += 1 * inv * mult
                 else:
-                    pos_neg_count -= 1 * inv
-        if pos_neg_count > 0.0:
-            sentiment = 1.0
-        elif pos_neg_count < 0.0:
-            sentiment = -1.0
-        else:
-            sentiment = 0.0
-        return orig_movie, movie, sentiment
+                    pos_neg_count -= 1 * inv * mult
+        if "!!" in input:
+            pos_neg_count *= 3
+        elif "!" in input:
+            pos_neg_count *= 2
+        print pos_neg_count
+        return orig_movie, movie, float(pos_neg_count)
 
     def update_user_vector(self, movie, sentiment):
         found_title = False
