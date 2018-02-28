@@ -52,13 +52,17 @@ class Chatbot:
 
       self.neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
       
-      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ']
+      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ', '\"%s\" was a fun movie. ', '\"%s\" was enjoyable', '\"%s\" was enjoyable']
 
-      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ']
+      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie']
 
       self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood']
       
-      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ']
+
+      self.negSet2 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+
+      self.negSet3 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
 
     def greeting(self):
       """chatbot greeting message"""
@@ -99,9 +103,9 @@ class Chatbot:
             movie = input[first_quote:second_quote]
             input = input[:first_quote-2] + input[second_quote+1:]
             if movie in self.titleSet:
-                return movie
+                return movie, input
             elif movie in self.titleDict.keys():
-                return movie + " (" + self.titleDict[title][0] + ")"
+                return movie + " (" + self.titleDict[title][0] + ")", input
         pat = re.compile('([A-Z1-9])')
         for m in pat.finditer(input):
             titleTest = input[m.start():]
