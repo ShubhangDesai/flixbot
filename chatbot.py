@@ -33,6 +33,8 @@ class Chatbot:
       self.data_points = 0
       self.recommendingMovies = False
       self.numRecs = 0
+
+      ##Koby's sets for negations/emphasis/strong positive/strong negative
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
 
@@ -45,6 +47,18 @@ class Chatbot:
       self.negSet = set()
       for word in ['awful', 'horrible', 'bad', 'worst', 'broken', 'terrible', 'appalling', 'atrocious', 'depressing', 'dire', 'disgusting', 'dreadful', 'nasty', '0/10', 'unpleasant', 'abominable', 'deplorable', 'gross', 'offensive', 'abhorrent', 'loathsome', 'abhor', 'despise', 'detest', 'loathe', 'shun', 'curse', 'nope', 'nopetrain']:
           self.negSet.add(self.p.stem(word))
+
+      ##Koby's sets for things that the chatbot says
+
+      self.neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
+      
+      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ']
+
+      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ']
+
+      self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood']
+      
+      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
 
     def greeting(self):
       """chatbot greeting message"""
@@ -150,7 +164,6 @@ class Chatbot:
             pos_neg_count *= 3
         elif "!" in input:
             pos_neg_count *= 2
-        print pos_neg_count
         return orig_movie, movie, float(pos_neg_count)
 
     def update_user_vector(self, movie, sentiment):
@@ -168,16 +181,13 @@ class Chatbot:
 
     #gets random response based on sentiment and movie
     def getResponse(self, sentiment):
-      neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
-      posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, \"%s\" was a great movie! ', 'I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'Yea, I\'d give \"%s\" at least a 10/10, it was great! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ']
-      negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
       if sentiment == 0.0:
-          response = random.sample(neutralSet, 1)[0]
+          response = random.sample(self.neutralSet, 1)[0]
       else:
-        if sentiment == 1.0:
-            response = random.sample(posSet, 1)[0]
+        if sentiment > 0:
+            response = random.sample(self.posSet, 1)[0]
         else:
-            response = random.sample(negSet, 1)[0]
+            response = random.sample(self.negSet, 1)[0]
       return response
 
     def process(self, input):
@@ -212,14 +222,12 @@ class Chatbot:
                   response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
               elif movie == 'NO_TITLE':
                   response = 'Sorry, I\'m not familiar with that title.'
-              elif sentiment == 0.0:
-                  response = self.getResponse(sentiment) % movie
               else:
-                  self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
-                  # response = 'Glad to hear you liked \"%s\"! ' if sentiment == 1.0 else 'Sorry you didn\'t like \"%s\". '
-                  response = self.getResponse(sentiment) % orig_movie #uses human-readable, non-article-handled "The X" version for readability
-                  if self.data_points < 5:
-                      response += 'Tell me about another movie you have seen.'
+                  response = self.getResponse(sentiment) % orig_movie
+                  if sentiment != 0.0:
+                      self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+                      if self.data_points < 5:
+                          response += 'Tell me about another movie you have seen.'
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
               currRec = self.recommend(self.user_vector)
