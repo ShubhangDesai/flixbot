@@ -35,6 +35,8 @@ class Chatbot:
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
 
+      self.overstSet = set(['above', 'absolute', 'abundance', 'actual', 'again', 'always', 'assuredly', 'astonish', 'atrocious', 'audacious', 'authentic', 'avid', 'blatant', 'brilliant', 'brutality', 'CONTINUE THIS'])
+
 
     def greeting(self):
       """chatbot greeting message"""
