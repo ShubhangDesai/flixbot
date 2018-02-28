@@ -56,8 +56,11 @@ class Chatbot:
     #############################################################################
 
     def is_a_movie(self, title):
-        if title in self.titleDict.keys():
-            return title + " (" + self.titleDict[title][0] + ")"
+        capitalList = self.titleDict.keys()
+        lowerList = [t.lower() for t in self.titleDict.keys()]
+        if title.lower() in lowerList:
+            capitalTitle = capitalList[lowerList.index(title.lower())]
+            return capitalTitle + " (" + self.titleDict[capitalTitle][0] + ")"
         return None
 
     ##returns title and input(with title extracted)
@@ -71,19 +74,23 @@ class Chatbot:
             second_quote = first_quote + input[first_quote:].find('\"')
             movie = input[first_quote:second_quote]
             input = input[:first_quote-2] + input[second_quote+1:]
-            return movie, input
-        pat = re.compile('([A-Z])')
+            if movie in self.titleSet:
+                return movie
+            elif movie in self.titleDict.keys():
+                return movie + " (" + self.titleDict[title][0] + ")"
+        pat = re.compile('([A-Z1-9])')
         for m in pat.finditer(input):
             titleTest = input[m.start():]
             titleTest += ' '
             while " " in titleTest:
                 titleTest = titleTest.rsplit(' ', 1)[0]
                 firstWord = titleTest.split()[0]
-                if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-                    titleTest = titleTest + ', ' + firstWord
-                    titleTest = titleTest.split(' ', 1)[1]  #after article handling, if needed
-                    print titleTest
                 fullTitle = self.is_a_movie(titleTest)
+                if not fullTitle:
+                    if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+                        titleTest = titleTest + ', ' + firstWord
+                        titleTest = titleTest.split(' ', 1)[1]  #after article handling, if needed
+                        fullTitle = self.is_a_movie(titleTest)
                 if fullTitle:
                     if m.start() + len(titleTest) >= len(input):
                         return fullTitle, input[:m.start()-1]
@@ -98,12 +105,11 @@ class Chatbot:
             return None, None, None
 
         orig_movie = movie #before article handling, readable version
-
-        firstWord = movie.split()[0]
+        '''firstWord = movie.split()[0]
         lastWordInd = movie.index(movie.split()[-1])
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
             movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-            movie = movie.split(' ', 1)[1]  #after article handling, if needed
+            movie = movie.split(' ', 1)[1]  #after article handling, if needed'''
 
         if movie not in self.titleSet:
             return "NO_TITLE", "NO_TITLE", 0.0
