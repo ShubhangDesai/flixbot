@@ -10,6 +10,7 @@ import csv
 import math
 import random
 from PorterStemmer import PorterStemmer as ps
+import re
 
 import numpy as np
 
@@ -54,7 +55,18 @@ class Chatbot:
     # 2. Modules 2 and 3: extraction and transformation                         #
     #############################################################################
 
+    ##extracts movie without quotes and returns input without movie
+    ##needs to be input full movie without year
+    def extract_movie(self, input):
+        pat = re.compile('([A-Z])')
+        for m in p.finditer(input):
+            print m
+            pass
+        print 'FUCK'
+        print matches
+        
     def get_movie_and_sentiment(self, input):
+        self.extract_movie(input)
         if input.count('\"') != 2:
             return None, None, None
 
@@ -185,6 +197,18 @@ class Chatbot:
       # movie i by user j
       self.titles, self.ratings = ratings()
       self.titleSet = set(item[0] for item in self.titles) #don't want to deal with binary search
+      self.titleDict = {}
+      pat = re.compile('(\([0-9\-]*\))')
+      for title in self.titles:
+          for m in pat.finditer(title[0]):
+            newTitle = title[0][:m.start()-1]
+            date = m.group()
+            date = date[1:-1] #comment this out if you want parentheses
+            if newTitle in self.titleDict:
+                self.titleDict[newTitle].append(date)
+            else:
+                self.titleDict[newTitle] = [date]
+            
       reader = csv.reader(open('data/sentiment.txt', 'rb'))
       tempSentiment = dict(reader)
       self.sentiment = {}
@@ -215,7 +239,7 @@ class Chatbot:
         """Generates a list of movies based on the input vector u using
         collaborative filtering"""
         watched = np.where(u != 0.0)[0]
-
+        
         watched_movies = self.ratings[watched]
         norm = np.matmul(np.linalg.norm(self.ratings, axis=1).reshape(-1, 1),
                          np.linalg.norm(watched_movies, axis=1).reshape(1, -1))
