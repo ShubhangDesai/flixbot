@@ -150,13 +150,35 @@ class Chatbot:
                 titleTest = oldTitle
         return None, None
                 
+
+    def replace_article(self, movie):
+        front = s.rsplit(',', 2)[0]
+        back = s.rsplit(',', 2)[1][1:]
+
+    def starter_extract(self, input):
+         first_quote = input.find('\"') + 1
+         second_quote = first_quote + input[first_quote:].find('\"')
+         movie = input[first_quote:second_quote]
+         input = input[:first_quote-2] + input[second_quote+1:]
+         orig_movie = movie #before article handling, readable version
+ 
+         firstWord = movie.split()[0]
+         lastWordInd = movie.index(movie.split()[-1])
+         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+             movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
+             movie = movie.split(' ', 1)[1]  #after article handling, if needed
+         return orig_movie, movie, input
         
     def get_movie_and_sentiment(self, input):
-        movie, input = self.extract_movie(input)
+        if self.is_turbo == True:
+            movie, input = self.extract_movie(input)
+            orig_movie = movie ##fix orig_movie
+        else:
+            orig_movie, movie, input = self.starter_extract(input)
+            print orig_movie, movie
         if not movie and not input:
             return None, None, None
 
-        orig_movie = movie #before article handling, readable version
         '''firstWord = movie.split()[0]
         lastWordInd = movie.index(movie.split()[-1])
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
