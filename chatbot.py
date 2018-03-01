@@ -227,7 +227,7 @@ class Chatbot:
         r= re.compile(r"^" + re.escape(movie) + r" and the ")
         newList = filter(r.match, lowerList)
         if len(newList)>0: return True
-        r= re.compile(r"^" + re.escape(movie) + r":")
+        r= re.compile(r"^" + re.escape(movie) + r" ?[0-9]?:")
         newList = filter(r.match, lowerList)
         if len(newList)>0: return True
         return False
@@ -243,6 +243,7 @@ class Chatbot:
             if match: # assume that it found date
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
+                orig_movie = movie.rsplit(' (', 1)[0]
             if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 # movie, dist = self.get_closest(movie.lower(), lowerList)
@@ -266,7 +267,7 @@ class Chatbot:
                     firstWord = titleTest.split()[0]
                     fullTitle, date = self.is_a_movie(titleTest)
                     if not fullTitle: ##test for punctuation
-                        titleTest = titleTest.translate(None, string.punctuation)
+                        titleTest = titleTest.rstrip(string.punctuation)
                         fullTitle, date = self.is_a_movie(titleTest)
                     if fullTitle:
                         lastWord = oldTitle.rsplit(' ', 1)[-1]
@@ -396,7 +397,6 @@ class Chatbot:
         else:
             self.genState = 'CLARIFY'
             response = random.sample(self.neutralSet, 1)[0]
-            response += "Or you could..."
         if sentiment > 0 and self.emoState == 'happy':
             response += "Your love for this movie explains why you feel so happy. "
         elif sentiment < 0 and (self.emoState == "angry" or self.emoState == "upset"):
@@ -553,7 +553,6 @@ class Chatbot:
                               sentiment = 0.0
                       else:
                           full_movie = orig_movie + " (" + date +")"
-                          print orig_movie
                           response += self.getResponse(textSentiment) % full_movie
                           response += 'Tell me about another movie you have seen.'
                       if movie and date:
