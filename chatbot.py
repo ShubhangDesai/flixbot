@@ -151,39 +151,24 @@ class Chatbot:
         return None, None
 
     def starter_extract(self, input):
-         first_quote = input.find('\"') + 1
-         second_quote = first_quote + input[first_quote:].find('\"')
-         movie = input[first_quote:second_quote]
-         input = input[:first_quote-2] + input[second_quote+1:]
-         orig_movie = movie #before article handling, readable version
- 
-         firstWord = movie.split()[0]
-         lastWordInd = movie.index(movie.split()[-1])
-         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-             movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-             movie = movie.split(' ', 1)[1]  #after article handling, if needed
-         return orig_movie, movie, input
-        
-    def get_movie_and_sentiment(self, input):
-        if self.is_turbo == True:
-            movie, input = self.extract_movie(input)
-            orig_movie = movie ##fix orig_movie
-        else:
-            orig_movie, movie, input = self.starter_extract(input)
-            print orig_movie, movie
-        if not movie and not input:
+        if "\"" not in input:
             return None, None, None
 
-        '''firstWord = movie.split()[0]
+        first_quote = input.find('\"') + 1
+        second_quote = first_quote + input[first_quote:].find('\"')
+        movie = input[first_quote:second_quote]
+        input = input[:first_quote-2] + input[second_quote+1:]
+        orig_movie = movie #before article handling, readable version
+ 
+        firstWord = movie.split()[0]
         lastWordInd = movie.index(movie.split()[-1])
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
             movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-            movie = movie.split(' ', 1)[1]  #after article handling, if needed'''
+            movie = movie.split(' ', 1)[1]  #after article handling, if needed
+        return orig_movie, movie, input
 
-        if movie not in self.titleSet:
-            return "NO_TITLE", "NO_TITLE", 0.0
-        
-        pos_neg_count, sentiment = 0, 0.0
+    def extract_sentiment(self, input):
+        pos_neg_count = 0
         inv = 1
         mult = 1
         for word in input.split(' '):
@@ -206,6 +191,34 @@ class Chatbot:
             pos_neg_count *= 3
         elif "!" in input:
             pos_neg_count *= 2
+
+        return pos_neg_count
+
+    def get_movie_and_sentiment(self, input):
+        if self.is_turbo == True:
+            movie, input = self.extract_movie(input)
+            orig_movie = movie ##fix orig_movie
+
+
+        else:
+            orig_movie, movie, input = self.starter_extract(input)
+
+        if not movie and not input:
+            return None, None, None
+
+        if movie not in self.titleSet:
+            return "NO_TITLE", "NO_TITLE", 0.0
+
+
+
+        '''firstWord = movie.split()[0]
+        lastWordInd = movie.index(movie.split()[-1])
+        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
+            movie = movie.split(' ', 1)[1]  #after article handling, if needed'''
+
+        pos_neg_count = self.extract_sentiment(input)
+
         return orig_movie, movie, float(pos_neg_count)
 
     def update_user_vector(self, movie, sentiment):
