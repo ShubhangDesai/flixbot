@@ -66,9 +66,9 @@ class Chatbot:
       
       self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Yea, \"%s\" was definitely a bit below average. ', 'I agree, \"%s\" was underwhelming. ', '\"%s\" was not a satifying movie. ', '\"%s\" was definitely not the best movie. ', 'Yea, I\'d give \"%s\" a solid 4/10. ']
       
-      self.negSet2 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      self.negSet2 = ['Definitely, \"%s\" was just a bad experience. ', 'Yea...\"%s\" was almost the worst movie I ever saw. ', 'I agree, \"%s\" almost made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ', 'Yea, I\'d give \"%s\" a solid 2/10. ']
       
-      self.negSet3 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      self.negSet3 = ['Definitely, \"%s\" was just a terrible experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way for hours. ', 'I feel you,  \"%s\" was just downright AWFUL. ', 'You should be a movie critic,  \"%s\" was objectively AWFUL. ', 'Yea, I\'d give \"%s\" a solid 0/10. ']
       
 
       ##Kaylie's sets for emotional words
@@ -130,16 +130,15 @@ class Chatbot:
         return None, None
 
     def getMovieFromQuotes(self, input):
-        if input.count('\"') != 2:
-            return None, None, None
         first_quote = input.find('\"') + 1
         second_quote = first_quote + input[first_quote:].find('\"')
         movie = input[first_quote:second_quote]
         input = input[:first_quote-2] + input[second_quote+1:]
-        return  movie, input
+        return movie, input
 
     def rearrageArt(self, movie, date):
         if date:
+            firstWord = movie.split()[0]
             lastWordInd = movie.index(movie.split()[-1])
             if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
                 movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
@@ -198,10 +197,6 @@ class Chatbot:
         return None, None, None, None
                 
             
-            
-            
-
-            
         if input.count('\"') == 2:
             first_quote = input.find('\"') + 1
             second_quote = first_quote + input[first_quote:].find('\"')
@@ -243,13 +238,16 @@ class Chatbot:
     def get_movie_and_sentiment(self, input):
         if self.is_turbo == True:
             orig_movie, movie, input, date = self.extract_movie(input)
+            print movie, date
+            if date:
+                movie = movie + " (" + date + ")"
+                print movie
         else:
             orig_movie, movie, input = self.starter_extract(input)
         if not movie and not input:
             return None, None, None
         if movie not in self.titleSet:
             return "NO_TITLE", "NO_TITLE", 0.0
-
 
         '''firstWord = movie.split()[0]
         lastWordInd = movie.index(movie.split()[-1])
@@ -284,6 +282,22 @@ class Chatbot:
         else:
             response = random.sample(self.negSet, 1)[0]
       return response
+
+    def getCreativeResponse(self, sentiment):
+        if sentiment > 3.0:
+            response = random.sample(self.posSet3, 1)[0]
+        elif sentiment < -3.0:
+            response = random.sample(self.negSet3, 1)[0]
+        elif sentiment > 1.0:
+            response = random.sample(self.posSet2, 1)[0]
+        elif sentiment < -1.0:
+            response = random.sample(self.negSet2, 1)[0]
+        elif sentiment > 0.0:
+            response = random.sample(self.posSet, 1)[0]
+        elif sentiment < 0.0:
+            response = random.sample(self.negSet, 1)[0]
+        else:
+            response = random.sample(self.neutralSet, 1)[0]
 
     def get_emotion(self, input):
       #[angry, fear, sad, happy] 0 1 2 3 
@@ -395,7 +409,7 @@ class Chatbot:
               elif movie == 'NO_TITLE':
                   response = 'Sorry, I\'m not familiar with that title.'
               else:
-                  response += self.getResponse(sentiment) % orig_movie
+                  response += self.getCreativeResponse(textSentiment) % orig_movie
                   if sentiment != 0.0:
                       self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
                       if self.data_points < 5:
