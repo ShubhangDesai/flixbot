@@ -34,6 +34,9 @@ class Chatbot:
       self.recommendingMovies = False
       self.numRecs = 0
 
+      ##Kaylie needs this as placeholder for partial titles for disambiguate, chosen to not conflict or interfere
+      self.PLACEHOLDER_TITLE = "UNKKKPARTIAL"
+
       ##Koby's variables for cleanly keeping track of state
 
       ##the state of the bot 'MOVIE', 'REC', 'CLARIFY' (for sentiment), 'REASK' (for movie)
@@ -218,8 +221,16 @@ class Chatbot:
                             possible_movie = item
                             min_dist = dist
 
-        print(possible_movie)
         return possible_movie, min_dist
+
+    def check_partial(self, movie, lowerList):
+        r= re.compile(r"^" + re.escape(movie) + r" and the ")
+        newList = filter(r.match, lowerList)
+        if len(newList)>0: return True
+        r= re.compile(r"^" + re.escape(movie) + r":")
+        newList = filter(r.match, lowerList)
+        if len(newList)>0: return True
+        return False
 
     def extract_movie(self, input):
         capitalList = self.titleDict.keys()
@@ -233,9 +244,12 @@ class Chatbot:
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
             if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList:
-                movie, dist = self.get_closest(movie.lower(), lowerList)
+                #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
+                # movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
-                    return None, None, None, None  
+                    if self.check_partial(movie.lower(), lowerList):
+                        return movie, self.PLACEHOLDER_TITLE, None, None
+                    else: return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
             else:
@@ -309,6 +323,12 @@ class Chatbot:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
                 orig_movie, movie, input, date = self.extract_movie(input)
+                #when there is a title that doesn't exist but is a correct partial starting title for a few movies
+                if movie == self.PLACEHOLDER_TITLE: 
+                    movies.append(movie)
+                    orig_movies.append(orig_movie)
+                    dates.append(None)
+                    sentiments.append(0.0)
                 if (not input or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
                 clauses = input.split(" but ")
@@ -476,7 +496,7 @@ class Chatbot:
               emotions = ["angry", "scared", "upset", "happy"]
               response = ""
               if not emotion_index and len(movies)==0: 
-                  if input[-1] in string.punctuation: response = input[:-1] + "?" 
+                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?" 
                   else: response = input + "?" 
                   response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
                   self.sentState = self.extract_sentiment(input)
@@ -508,6 +528,9 @@ class Chatbot:
                              self.update_user_vector(self.movState, self.sentState)
                              response += self.getResponse(textSentiment) % self.movState
                              response += 'Tell me about another movie you have seen.'
+                      elif movie == self.PLACEHOLDER_TITLE:
+                          response += "Sorry, I'm not sure which \"" + orig_movie + "\" you are refering to since there are multiple ones! Could you please rephrase that?"
+                          sentiment = 0.0
                       elif not date:
                           if len(self.titleDict[movie])==1:
                               date = self.titleDict[movie][0]
