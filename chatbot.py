@@ -127,7 +127,7 @@ class Chatbot:
             if len(self.titleDict[capitalTitle]) == 1:
                 date = self.titleDict[capitalTitle][0]
             return capitalTitle, date
-        return None, None, None
+        return None, None
 
     def getMovieFromQuotes(self, input):
         if input.count('\"') != 2:
@@ -185,10 +185,10 @@ class Chatbot:
                     titleTest = titleTest.rsplit(' ', 1)[0]
                     oldTitle = titleTest
                     firstWord = titleTest.split()[0]
-                    fullTitle, date, retTitle = self.is_a_movie(titleTest)
+                    fullTitle, date = self.is_a_movie(titleTest)
                     if not fullTitle: ##test for punctuation
                         titleTest = titleTest.translate(None, string.punctuation)
-                        fullTitle, date, retTitle = self.is_a_movie(titleTest)
+                        fullTitle, date = self.is_a_movie(titleTest)
                     if fullTitle:
                         if m.start() + len(titleTest) >= len(input):
                             return oldTitle, fullTitle, input[:m.start()-1], date
