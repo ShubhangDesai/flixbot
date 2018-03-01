@@ -194,15 +194,6 @@ class Chatbot:
                             return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date
                     titleTest = oldTitle
         return None, None, None, None
-        if input.count('\"') == 2:
-            first_quote = input.find('\"') + 1
-            second_quote = first_quote + input[first_quote:].find('\"')
-            movie = input[first_quote:second_quote]
-            input = input[:first_quote-2] + input[second_quote+1:]
-            if movie in self.titleSet:
-                return movie, input
-            elif movie in self.titleDict.keys():
-                return movie + " (" + self.titleDict[movie][0] + ")", input
         
 
     def extract_sentiment(self, input):
@@ -229,16 +220,10 @@ class Chatbot:
             pos_neg_count *= 3
         elif "!" in input:
             pos_neg_count *= 2
-
         return pos_neg_count
 
     def get_movie_and_sentiment(self, input):
         if self.is_turbo == True:
-            orig_movie, movie, input, date = self.extract_movie(input)
-            print movie, date
-            if date:
-                movie = movie + " (" + date + ")"
-                print movie
             movies, sentiments = [], []
             while input != None:
                 _, movie, input, _ = self.extract_movie(input)
