@@ -186,11 +186,41 @@ class Chatbot:
         movie = self.rearrageArt(movie, True)
         return orig_movie, movie, input
 
-    ##returns title and input(with title extracted)
-    ##     example: I like Titanic a lot -> Titanic (1997), I like a lot
-    ##returns first moive, so consider recalling it w just input
-    ##for disambiguate, consider returning flag for input since input is not needed
-    ##     example
+    def LD(self, s, t):
+        if s == "":
+            return len(t)
+        if t == "":
+            return len(s)
+        if s[-1] == t[-1]:
+            cost = 0
+        else:
+            cost = 1
+
+        res = min([self.LD(s[:-1], t) + 1,
+                   self.LD(s, t[:-1]) + 1,
+                   self.LD(s[:-1], t[:-1]) + cost])
+        return res
+
+    def get_closest(self, movie, movie_list):
+        possible_movie, min_dist, min_hist = '', float('Inf'), float('Inf')
+        for i, item in enumerate(movie_list):
+            if abs(len(item) - len(movie)) <= 3:
+                hist = [abs(item.count(let) - movie.count(let)) for let in 'abcdefghijklmnopqrstuvwxyz ']
+                hist_diff = sum(hist)
+                if hist_diff <= 5:
+                    if len(movie) >= 10:
+                        if hist_diff < min_dist and hist_diff <= 3:
+                            possible_movie = item
+                            min_dist = hist_diff
+                    else:
+                        dist = self.LD(item, movie)
+                        if dist < min_dist and dist <= 5:
+                            possible_movie = item
+                            min_dist = dist
+
+        print(possible_movie)
+        return possible_movie, min_dist
+
     def extract_movie(self, input):
         capitalList = self.titleDict.keys()
         lowerList = [t.lower() for t in self.titleDict.keys()]
@@ -199,11 +229,11 @@ class Chatbot:
             orig_movie = movie
             match = re.findall('\(([^A-Za-z]*)\)', movie)
             date = None
-            if match: ##assume that it found date
+            if match: # assume that it found date
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
-            if movie.lower() not in lowerList:
-                movie = self.rearrageArt(movie, False)
+            if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList:
+                movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
                     return None, None, None, None  
                 else:
