@@ -227,15 +227,14 @@ class Chatbot:
     def get_movie_and_sentiment(self, input):
         if self.is_turbo == True:
             movies, sentiments = [], []
-            while input != None:
+            while input != "":
                 _, movie, input, _ = self.extract_movie(input)
                 clauses = input.split(" but ")
+                input = " but ".join(clauses[1:])
 
                 pos_neg_count = self.extract_sentiment(clauses[0])
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
-
-                input = None if len(clauses) == 1 else clauses[1]
 
             return movies, movies, sentiments
         else:
@@ -351,6 +350,7 @@ class Chatbot:
           maybe = False
 
           ##Maybe and No for recommend
+          print(self.data_points)
           if self.data_points >= 5:
               if input.lower() == 'no' or self.numRecs >= 5:
                   #keeping previous sentiment
@@ -390,6 +390,7 @@ class Chatbot:
                   for sentiment, orig_movie, movie in zip(sentiments, orig_movies, movies):
                       response += self.getResponse(sentiment) % orig_movie
                       if sentiment != 0.0:
+                          print("noice")
                           self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
 
                   if self.data_points < 5:
