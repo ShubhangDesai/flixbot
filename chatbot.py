@@ -58,14 +58,16 @@ class Chatbot:
 
       self.neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
       
-      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ', '\"%s\" was a fun movie. ', '\"%s\" was enjoyable', '\"%s\" was enjoyable']
+      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good. ', 'Yes, \"%s\" was an above average movie. ', 'I too enjoyed \"%s\" ', '\"%s\" was a fun movie. ', '\"%s\" was enjoyable. ', '\"%s\" was enjoyable. ']
 
-      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie']
+      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid. ', 'I also really liked \"%s\". ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie. ']
 
       self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood']
       
-      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ']
+      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Yea, \"%s\" was definitely a bit below average. ', 'I agree, \"%s\" was underwhelming. ', '\"%s\" was not a satifying movie. ', '\"%s\" was definitely not the best movie. ', 'Yea, I\'d give \"%s\" a solid 4/10. ']
+      
       self.negSet2 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      
       self.negSet3 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
       
 
@@ -279,6 +281,8 @@ class Chatbot:
       if self.is_turbo == True:
           orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
           maybe = False
+
+          ##Maybe and No for recommend
           if self.data_points >= 5:
               if input.lower() == 'no' or self.numRecs >= 5:
                   #keeping previous sentiment
@@ -289,6 +293,8 @@ class Chatbot:
               elif input.lower() != 'yes':
                   response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
                   maybe = True
+
+          ##Getting movies
           if self.data_points < 5:
               if not movie:
                   emotion_index = self.get_emotion(input)
@@ -317,6 +323,8 @@ class Chatbot:
                       self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
                       if self.data_points < 5:
                           response += 'Tell me about another movie you have seen.'
+                          
+          ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
               currRec = self.recommend(self.user_vector)
