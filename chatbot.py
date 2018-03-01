@@ -34,6 +34,12 @@ class Chatbot:
       self.recommendingMovies = False
       self.numRecs = 0
 
+      ##Koby's variables for cleanly keeping track of state
+
+      ##the state of the bot 'MOVIE', 'REC', 'CLAIFY'
+      self.genState = 'MOVIE'
+      
+
       ##Koby's sets for negations/emphasis/strong positive/strong negative
       
       self.negateSet= set([ "ain't", 'aversion', "can't", 'cannot', 'contradictory', 'contrary', 'counteract', 'dispute', 'dispute', "didn't", "don't", 'implausibility', 'impossibility', 'improbability', 'inability', 'incapable', 'incomplete', 'insignificant', 'insufficient', 'negate', 'negation', 'neither', 'never', 'no', 'no', 'no', 'no', 'nobody',  'non', 'none', 'nor', 'not', 'nothing', 'opposite', 'rather', 'unsatisfactory' 'untrue', "won't"])
@@ -116,13 +122,14 @@ class Chatbot:
             if movie in self.titleSet:
                 return movie, input
             elif movie in self.titleDict.keys():
-                return movie + " (" + self.titleDict[title][0] + ")", input
+                return movie + " (" + self.titleDict[movie][0] + ")", input
         pat = re.compile('([A-Z1-9])')
         for m in pat.finditer(input):
             titleTest = input[m.start():]
             titleTest += ' '
             while " " in titleTest:
                 titleTest = titleTest.rsplit(' ', 1)[0]
+                oldTitle = titleTest
                 firstWord = titleTest.split()[0]
                 fullTitle = self.is_a_movie(titleTest)
                 if not fullTitle:
@@ -138,6 +145,7 @@ class Chatbot:
                         return fullTitle, input[:m.start()-1]
                     else:
                         return fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):]
+                titleTest = oldTitle
         return None, None
                 
         
