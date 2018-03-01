@@ -115,7 +115,7 @@ class Chatbot:
         if title.lower() in lowerList:
             capitalTitle = capitalList[lowerList.index(title.lower())]
             if len(self.titleDict[capitalTitle]) == 1:
-                date = self.titleDict[capitalTitle][0]      
+                date = self.titleDict[capitalTitle][0]
             return capitalTitle, date
         firstWord = title.split()[0]
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
@@ -136,6 +136,8 @@ class Chatbot:
         return movie, input
 
     def rearrageArt(self, movie, date):
+        if len(movie.split()) == 0:
+            return movie
         if date:
             firstWord = movie.split()[0]
             lastWordInd = movie.index(movie.split()[-1])
@@ -163,16 +165,24 @@ class Chatbot:
     ##for disambiguate, consider returning flag for input since input is not needed
     ##     example
     def extract_movie(self, input):
+        capitalList = self.titleDict.keys()
+        lowerList = [t.lower() for t in self.titleDict.keys()]
         if input.count('\"') >= 2:
             movie, input = self.getMovieFromQuotes(input)
             orig_movie = movie
-            if movie not in self.titleDict.keys():
-              movie = self.rearrageArt(movie, False)
             match = re.findall('\(([^A-Za-z]*)\)', movie)
             date = None
             if match: ##assume that it found date
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
+            if movie.lower() not in lowerList:
+                movie = self.rearrageArt(movie, False)
+                if movie.lower() not in lowerList: ##TEMPFIXNUM1
+                    return None, None, None, None  
+                else:
+                    movie = capitalList[lowerList.index(movie.lower())]
+            else:
+                movie = capitalList[lowerList.index(movie.lower())]
             return orig_movie, movie, input, date
         else:
             pat = re.compile('([A-Z1-9])')
@@ -188,6 +198,12 @@ class Chatbot:
                         titleTest = titleTest.translate(None, string.punctuation)
                         fullTitle, date = self.is_a_movie(titleTest)
                     if fullTitle:
+                        lastWord = oldTitle.rsplit(' ', 1)[-1]
+                        match = re.findall('\(([^A-Za-z]*)\)', lastWord)
+                        if match: ##assume that it found date
+                            date = match[0]
+                            oldTitle = oldTitle.rsplit(' (', 1)[0]
+                        oldTitle = oldTitle.rstrip('?:!.,;').title()
                         if m.start() + len(titleTest) >= len(input):
                             return oldTitle, fullTitle, input[:m.start()-1], date
                         else:
@@ -227,6 +243,8 @@ class Chatbot:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
                 orig_movie, movie, input, date = self.extract_movie(input)
+                if not input:
+                    break
                 clauses = input.split(" but ")
                 input = " but ".join(clauses[1:])
 
@@ -264,14 +282,17 @@ class Chatbot:
 
     #gets random response based on sentiment and movie
     def getResponse(self, sentiment):
-      if sentiment == 0.0:
-          response = random.sample(self.neutralSet, 1)[0]
+      if self.is_turbo:
+          return self.getCreativeResponse(sentiment)
       else:
-        if sentiment > 0:
-            response = random.sample(self.posSet, 1)[0]
-        else:
-            response = random.sample(self.negSet, 1)[0]
-      return response
+          if sentiment == 0.0:
+              response = random.sample(self.neutralSet, 1)[0]
+          else:
+              if sentiment > 0:
+                  response = random.sample(self.posSet, 1)[0]
+              else:
+                  response = random.sample(self.negSet, 1)[0]
+          return response
 
     def getCreativeResponse(self, sentiment):
         if sentiment > 3.0:
@@ -288,6 +309,7 @@ class Chatbot:
             response = random.sample(self.negSet, 1)[0]
         else:
             response = random.sample(self.neutralSet, 1)[0]
+        return response
 
     def get_emotion(self, input):
       #[angry, fear, sad, happy] 0 1 2 3 
@@ -404,28 +426,29 @@ class Chatbot:
                   for sentiment, orig_movie, movie, date in zip(sentiments, orig_movies, movies, dates):
                       full_movie = None
                       if not date:
-                          if len(self.titleDict[movie])==1: 
+                          if len(self.titleDict[movie])==1:
+                              date = self.titleDict[movie][0]
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
-                              response += "You must be referring to " + full_movie +"!\n"
-                              response += self.getResponse(sentiment) % full_movie
+                              response += "You must be referring to \"" + full_movie +"\"!\n"
+                              response += self.getResponse(textSentiment) % full_movie
                           else:
                               full_movie = None
-                              response += "Sorry, I'm not sure which " + orig_movie+ " you are refering to since there are multiple ones! Could you please rephrase that?" 
+                              response += "Sorry, I'm not sure which \"" + orig_movie + "\" you are refering to since there are multiple ones! Could you please rephrase that?" 
                       elif date not in self.titleDict[movie]:
                           response += "Sorry I don't think you provided a correct year! \n"
                           if len(self.titleDict[movie])==1: 
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
                               response += "You must be referring to " + full_movie +"instead!\n"
-                              response += self.getResponse(sentiment) % full_movie
+                              response += self.getResponse(textSentiment) % full_movie
                           else:
                               full_movie = None
                               response += "Could you please double check and rephrase that?" 
                       else:
                           full_movie = orig_movie + " (" + date +")"
-                          response += self.getResponse(sentiment) % full_movie
+                          response += self.getResponse(textSentiment) % full_movie
                           response += 'Tell me about another movie you have seen.'
                       if sentiment != 0.0:
-                          self.update_user_vector(full_movie, sentiment) # uses article-handled "X, The" version for title recognition            
+                          self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition            
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
