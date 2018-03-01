@@ -58,7 +58,7 @@ class Chatbot:
 
       self.neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
       
-      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good. ', 'Yes, \"%s\" was an above average movie. ', 'I too enjoyed \"%s\" ', '\"%s\" was a fun movie. ', '\"%s\" was enjoyable. ', '\"%s\" was enjoyable. ']
+      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good. ', 'Yes, \"%s\" was an above average movie. ', 'I too enjoyed \"%s\" ', 'Yeah \"%s\" was a fun movie. ', 'Yep \"%s\" was enjoyable! ', 'Yeah \"%s\" was enjoyable. ']
 
       self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid. ', 'I also really liked \"%s\". ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie. ']
 
@@ -76,11 +76,11 @@ class Chatbot:
       #0 angry, 1 fear, 2 sad, 3 happy
       angry =["angry","irate", "mad", "annoyed", "cross", "vexed", "irritated", "indignant", "aggravated", "angered", "bitter", "burning", "embittered", "enraged", "exasperated", "fired up", "frustrated", "fuming", "furious", "inflamed", "outraged", "pissed off","raging", "seething", "steaming", "soreheaded", "stormy"]
       self.emotions.append(list(map(lambda x: self.p.stem(x), angry)))
-      scared = ["afraid", "frightened", "scared", "terrified", "fearful", "petrified", "terror-stricken", "terror-struck"]
+      scared = ["afraid", "horrified", "frightened", "scared", "terrified", "fearful", "petrified", "terror-stricken", "terror-struck"]
       self.emotions.append(list(map(lambda x: self.p.stem(x), scared)))
-      sad = ["sad","upset","unhappy", "sorrowful", "dejected", "depressed", "downcast", "miserable", "down", "despondent", "despairing", "disconsolate", "desolate", "wretched", "glum", "gloomy", "doleful", "dismal", "melancholy", "mournful", "woebegone", "forlorn", "crestfallen", "heartbroken", "inconsolable"]
+      sad = ["sad","urgh", "upset","unhappy", "sorrowful", "dejected", "depressed", "downcast", "miserable", "down", "despondent", "despairing", "disconsolate", "desolate", "wretched", "glum", "gloomy", "doleful", "dismal", "melancholy", "mournful", "woebegone", "forlorn", "crestfallen", "heartbroken", "inconsolable"]
       self.emotions.append(list(map(lambda x: self.p.stem(x), sad)))
-      happy=["happy","cheerful", "yay", "cheery", "merry", "joyful", "jovial", "jolly", "jocular", "gleeful", "carefree", "untroubled", "delighted", "smiling", "beaming", "grinning", "good", "lighthearted", "pleased", "contented", "content", "satisfied", "gratified", "buoyant", "radiant", "blithe", "joyous", "beatific"]
+      happy=["happy","cheerful", "excited", "surprised", "yay", "cheery", "merry", "joyful", "jovial", "jolly", "jocular", "gleeful", "carefree", "untroubled", "delighted", "smiling", "beaming", "grinning", "good", "lighthearted", "pleased", "contented", "content", "satisfied", "gratified", "buoyant", "radiant", "blithe", "joyous", "beatific"]
       self.emotions.append((list(map(lambda x: self.p.stem(x), happy))))
 
     def greeting(self):
@@ -251,7 +251,6 @@ class Chatbot:
             return "NO_TITLE", "NO_TITLE", 0.0
 
 
-
         '''firstWord = movie.split()[0]
         lastWordInd = movie.index(movie.split()[-1])
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
@@ -373,29 +372,30 @@ class Chatbot:
 
           ##Getting movies
           if self.data_points < 5:
-              if not movie:
-                  emotion_index = self.get_emotion(input)
-                  emotions = ["angry", "scared", "upset", "happy"]
-                  if not emotion_index: 
-                      if input[-1] in string.punctuation: response = input[:-1] + "?" 
-                      else: response = input + "?" 
-                      response+= " Sorry, I don\'t think I understand."
-                  else:
-                    if 3 in emotion_index and len(emotion_index)>1: response = "Sorry to hear you're conflicted!"
-                    elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy!"
-                    else: 
+              emotion_index = self.get_emotion(input)
+              emotions = ["angry", "scared", "upset", "happy"]
+              response = ""
+              if not emotion_index and not movie: 
+                  if input[-1] in string.punctuation: response = input[:-1] + "?" 
+                  else: response = input + "?" 
+                  response+= " Sorry, I don\'t think I understand. "
+              elif emotion_index:
+                  if 3 in emotion_index and len(emotion_index)>1: response = "Hmmm seems you're conflicted! "
+                  elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy! "
+                  else: 
                       response = "Sorry to hear you're "
                       first = True
                       for i in emotion_index:
-                        if not first: response += " and "
-                        response += emotions[i]
-                        first = False
-                      response += "! Please let me know if I can do anything to help!"
-                  response += " Now, could you tell me about a movie that you have seen?"
+                          if not first: response += " and "
+                          response += emotions[i]
+                          first = False
+                      response += "! Please let me know if I can do anything to help! "
+              if not movie:
+                  response += "Now, could you tell me about a movie that you have seen?"
               elif movie == 'NO_TITLE':
                   response = 'Sorry, I\'m not familiar with that title.'
               else:
-                  response = self.getResponse(sentiment) % orig_movie
+                  response += self.getResponse(sentiment) % orig_movie
                   if sentiment != 0.0:
                       self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
                       if self.data_points < 5:
