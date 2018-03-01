@@ -36,8 +36,14 @@ class Chatbot:
 
       ##Koby's variables for cleanly keeping track of state
 
-      ##the state of the bot 'MOVIE', 'REC', 'CLAIFY'
+      ##the state of the bot 'MOVIE', 'REC', 'CLARIFY' (for sentiment), 'REASK' (for movie)
       self.genState = 'MOVIE'
+      ##the last emotion mentioned 
+      self.emoState = 'NEUTRAL'
+      ##the last sentiment
+      self.sentState = 0.0
+      ##the last movie
+      self.movState = 'NONE'
       
 
       ##Koby's sets for negations/emphasis/strong positive/strong negative
@@ -101,6 +107,27 @@ class Chatbot:
     #############################################################################
     # 2. Modules 2 and 3: extraction and transformation                         #
     #############################################################################
+
+    def say_something_creepy(self):
+        x = randint(0, 5)
+        if x != 3:
+            return False
+        return True
+
+    def is_opposite(self, input):
+        if input.split()[0].lower() == 'but' or input.split()[0].lower() == 'however' or input.split()[0].lower() == 'although' or input.split()[0].lower() == 'though':
+            return True
+        return False
+
+    def is_same(self, input):
+        if "also" in input.lower() or "another" in input.lower() or "same" in input.lower() or "similar" in input.lower():
+            return True
+        return False
+        
+    def is_continuation(self, input):
+        if "it" in input.lower() or "this" in input.lower() or "that" in input.lower() or "film" in input.lower() or "movie" in input.lower():
+            return True
+        return False
 
     def is_a_movie(self, title):
         capitalList = self.titleDict.keys()
@@ -209,7 +236,7 @@ class Chatbot:
                         else:
                             return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date
                     titleTest = oldTitle
-        return None, None, None, None
+        return None, None, input, None
         
 
     def extract_sentiment(self, input):
@@ -236,6 +263,15 @@ class Chatbot:
             pos_neg_count *= 3
         elif "!" in input:
             pos_neg_count *= 2
+        ##if there's no sentiment see if there's sentiment from last run to contrast/compare with
+        if pos_neg_count == 0.0 and self.sentState != 0.0:
+            if self.genState == "REASK":
+                pos_neg_count = self.sentState
+                self.genState = "MOVIE"
+            elif self.is_same(input):
+                pos_neg_count = self.sentState
+            elif self.is_opposite(input):
+                pos_neg_count = self.sentState * -1
         return pos_neg_count
 
     def get_movie_and_sentiment(self, input):
@@ -243,7 +279,7 @@ class Chatbot:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
                 orig_movie, movie, input, date = self.extract_movie(input)
-                if not input:
+                if (not input or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
                 clauses = input.split(" but ")
                 input = " but ".join(clauses[1:])
@@ -308,7 +344,13 @@ class Chatbot:
         elif sentiment < 0.0:
             response = random.sample(self.negSet, 1)[0]
         else:
+            self.genState = 'CLARIFY'
             response = random.sample(self.neutralSet, 1)[0]
+            response += "Or you could..."
+        if sentiment > 0 and self.emoState == 'happy':
+            response += "Your love for this movie explains why you feel so happy. "
+        elif sentiment < 0 and (self.emoState == "angry" or self.emoState == "upset"):
+            response += "Your hatred for this film explains why you're so " + self.emoState + " and salty. "
         return response
 
     def get_emotion(self, input):
@@ -406,8 +448,11 @@ class Chatbot:
               if not emotion_index and len(movies)==0: 
                   if input[-1] in string.punctuation: response = input[:-1] + "?" 
                   else: response = input + "?" 
-                  response+= " Sorry, I don\'t think I understand. "
+                  response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
+                  self.sentState = self.extract_sentiment(input)
+                  self.genState = 'REASK'
               elif emotion_index:
+                  self.emoState = emotions[emotion_index[0]]
                   if 3 in emotion_index and len(emotion_index)>1: response = "Hmmm seems you're conflicted! "
                   elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy! "
                   else: 
@@ -419,13 +464,21 @@ class Chatbot:
                           first = False
                       response += "! Please let me know if I can do anything to help! "
               if len(movies)==0:
+                  if self.genState != 'REASK':
+                      self.genState = 'MOVIE'
                   response += "Now, could you tell me about a movie that you have seen?"
               elif movies == 'NO_TITLE':
                   response = 'Sorry, I\'m not familiar with that title.'
+                  self.sentState = 0.0
               else:
                   for sentiment, orig_movie, movie, date in zip(sentiments, orig_movies, movies, dates):
                       full_movie = None
-                      if not date:
+                      if not movie:
+                         if self.genState == 'CLARIFY':
+                             self.update_user_vector(self.movState, self.sentState)
+                             response += self.getResponse(textSentiment) % self.movState
+                             response += 'Tell me about another movie you have seen.'
+                      elif not date:
                           if len(self.titleDict[movie])==1:
                               date = self.titleDict[movie][0]
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
@@ -433,7 +486,8 @@ class Chatbot:
                               response += self.getResponse(textSentiment) % full_movie
                           else:
                               full_movie = None
-                              response += "Sorry, I'm not sure which \"" + orig_movie + "\" you are refering to since there are multiple ones! Could you please rephrase that?" 
+                              response += "Sorry, I'm not sure which \"" + orig_movie + "\" you are refering to since there are multiple ones! Could you please rephrase that?"
+                              sentiment = 0.0
                       elif date not in self.titleDict[movie]:
                           response += "Sorry I don't think you provided a correct year! \n"
                           if len(self.titleDict[movie])==1: 
@@ -442,13 +496,18 @@ class Chatbot:
                               response += self.getResponse(textSentiment) % full_movie
                           else:
                               full_movie = None
-                              response += "Could you please double check and rephrase that?" 
+                              response += "Could you please double check and rephrase that?"
+                              sentiment = 0.0
                       else:
                           full_movie = orig_movie + " (" + date +")"
                           response += self.getResponse(textSentiment) % full_movie
                           response += 'Tell me about another movie you have seen.'
-                      if sentiment != 0.0:
-                          self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition            
+                      if movie and date:
+                          self.movState = movie + " (" + date + ")"
+                      self.sentState = sentiment
+                      if sentiment != 0.0 and movie and date:
+                          self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition
+                          self.genState = 'MOVIE'
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
@@ -481,8 +540,6 @@ class Chatbot:
                   return response
               else:
                   response = self.getMovieRecResponse()
-              
-
       return response
 
 
