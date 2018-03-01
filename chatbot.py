@@ -105,36 +105,29 @@ class Chatbot:
     def is_a_movie(self, title):
         capitalList = self.titleDict.keys()
         lowerList = [t.lower() for t in self.titleDict.keys()]
+        date = None
         if ' ' in title:
             lastWord = title.rsplit(' ', 1)[-1]
-            lastWord = lastWord[1:-1]
-        else:
-            lastWord = None
-        date = None
+            match = re.findall('\(([^A-Za-z]*)\)', lastWord)
+            if match: ##assume that it found date
+                date = match[0]
+                movie = movie.rsplit('(', 1)[0]
+                movie += '\"'
         if title.lower() in lowerList:
             capitalTitle = capitalList[lowerList.index(title.lower())]
             if len(self.titleDict[capitalTitle]) == 1:
                 date = self.titleDict[capitalTitle][0]
-            else:
-                for currDate in self.titleDict[capitalTitle]:
-                    if currDate == lastWord:
-                        date = currDate
             return capitalTitle, date
         firstWord = title.split()[0]
         if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
             title = title + ', ' + firstWord
             title = title.split(' ', 1)[1]  #after article handling, if needed
-            print title
         if title.lower() in lowerList:
             capitalTitle = capitalList[lowerList.index(title.lower())]
             if len(self.titleDict[capitalTitle]) == 1:
                 date = self.titleDict[capitalTitle][0]
-            else:
-                for currDate in self.titleDict[capitalTitle]:
-                    if currDate == lastWord:
-                        date = currDate
             return capitalTitle, date
-        return None, None
+        return None, None, None
 
     def getMovieFromQuotes(self, input):
         if input.count('\"') != 2:
@@ -192,10 +185,10 @@ class Chatbot:
                     titleTest = titleTest.rsplit(' ', 1)[0]
                     oldTitle = titleTest
                     firstWord = titleTest.split()[0]
-                    fullTitle, date = self.is_a_movie(titleTest)
+                    fullTitle, date, retTitle = self.is_a_movie(titleTest)
                     if not fullTitle: ##test for punctuation
                         titleTest = titleTest.translate(None, string.punctuation)
-                        fullTitle, date = self.is_a_movie(titleTest)
+                        fullTitle, date, retTitle = self.is_a_movie(titleTest)
                     if fullTitle:
                         if m.start() + len(titleTest) >= len(input):
                             return oldTitle, fullTitle, input[:m.start()-1], date
@@ -250,15 +243,10 @@ class Chatbot:
     def get_movie_and_sentiment(self, input):
         if self.is_turbo == True:
             orig_movie, movie, input, date = self.extract_movie(input)
-            print orig_movie, movie, input, date
-
-
         else:
             orig_movie, movie, input = self.starter_extract(input)
-
         if not movie and not input:
             return None, None, None
-
         if movie not in self.titleSet:
             return "NO_TITLE", "NO_TITLE", 0.0
 
