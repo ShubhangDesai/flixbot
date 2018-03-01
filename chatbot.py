@@ -52,13 +52,28 @@ class Chatbot:
 
       self.neutralSet = ['I wasn\'t quite sure if you liked \"%s\"...could you phrase that differently? ', 'So did you like \"%s\" or not? ', 'What\'s your opinion on \"%s\"? ', 'You seem to have mixed feelings about \"%s\". Do you mind elaborating? ', 'I can\'t tell if you liked \"%s\". Could you elaborate? ']
       
-      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ']
+      self.posSet = ['Glad to hear you liked \"%s\"! ', 'Yea, I\'d give \"%s\" at least a 6/10, it was good ', 'Yes, \"%s\" was an above average movie ', 'I too enjoyed \"%s\" ', '\"%s\" was a fun movie. ', '\"%s\" was enjoyable', '\"%s\" was enjoyable']
 
-      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ']
+      self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid', 'I also really liked \"%s\" ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie']
 
       self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood']
       
-      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ']
+      self.negSet2 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      self.negSet3 = ['Definitely, \"%s\" was just a bad experience. I was dragged along. ', 'Yea...\"%s\" was the worst movie I ever saw. ', 'I agree, \"%s\" made me cry in a bad way. ', 'I feel you,  \"%s\" was just bad. ', 'You should be a movie critic,  \"%s\" was objectively bad. ']
+      
+
+      ##Kaylie's sets for emotional words
+      self.emotions = []
+      #0 angry, 1 fear, 2 sad, 3 happy
+      angry =["angry","irate", "mad", "annoyed", "cross", "vexed", "irritated", "indignant", "aggravated", "angered", "bitter", "burning", "embittered", "enraged", "exasperated", "fired up", "frustrated", "fuming", "furious", "inflamed", "outraged", "pissed off","raging", "seething", "steaming", "soreheaded", "stormy"]
+      self.emotions.append(list(map(lambda x: self.p.stem(x), angry)))
+      scared = ["afraid", "frightened", "scared", "terrified", "fearful", "petrified", "terror-stricken", "terror-struck"]
+      self.emotions.append(list(map(lambda x: self.p.stem(x), scared)))
+      sad = ["sad","upset","unhappy", "sorrowful", "dejected", "depressed", "downcast", "miserable", "down", "despondent", "despairing", "disconsolate", "desolate", "wretched", "glum", "gloomy", "doleful", "dismal", "melancholy", "mournful", "woebegone", "forlorn", "crestfallen", "heartbroken", "inconsolable"]
+      self.emotions.append(list(map(lambda x: self.p.stem(x), sad)))
+      happy=["happy","cheerful", "yay", "cheery", "merry", "joyful", "jovial", "jolly", "jocular", "gleeful", "carefree", "untroubled", "delighted", "smiling", "beaming", "grinning", "good", "lighthearted", "pleased", "contented", "content", "satisfied", "gratified", "buoyant", "radiant", "blithe", "joyous", "beatific"]
+      self.emotions.append((list(map(lambda x: self.p.stem(x), happy))))
 
     def greeting(self):
       """chatbot greeting message"""
@@ -99,9 +114,9 @@ class Chatbot:
             movie = input[first_quote:second_quote]
             input = input[:first_quote-2] + input[second_quote+1:]
             if movie in self.titleSet:
-                return movie
+                return movie, input
             elif movie in self.titleDict.keys():
-                return movie + " (" + self.titleDict[title][0] + ")"
+                return movie + " (" + self.titleDict[title][0] + ")", input
         pat = re.compile('([A-Z1-9])')
         for m in pat.finditer(input):
             titleTest = input[m.start():]
@@ -190,6 +205,30 @@ class Chatbot:
             response = random.sample(self.negSet, 1)[0]
       return response
 
+    def get_emotion(self, input):
+      #[angry, fear, sad, happy] 0 1 2 3 
+        emotion_scores = [0, 0, 0, 0]
+        inv = 1
+        mult = 1
+        for word in input.split(' '):
+            word = word.translate(None, string.punctuation)
+            if word in self.overstSet:
+                mult += 1
+            word = self.p.stem(word)
+            if word in self.negateSet:
+                inv *= -1
+            for i, emotion in enumerate(self.emotions):
+                if word in emotion:
+                    emotion_scores[i] += 1 * inv * mult
+        if "!!" in input:
+            emotion_scores = [i * 3 for i in emotion_scores]
+        elif "!" in input:
+            emotion_scores = [i * 2 for i in emotion_scores]
+        m = max(emotion_scores)
+        if m == 0: return None
+        else: return [i for i, j in enumerate(emotion_scores) if j == m]
+
+
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
       that
@@ -203,7 +242,56 @@ class Chatbot:
       #############################################################################
       response = ''
       if self.is_turbo == True:
-        response = 'processed %s in creative mode!!' % input
+          orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
+          maybe = False
+          if self.data_points >= 5:
+              if input.lower() == 'no' or self.numRecs >= 5:
+                  #keeping previous sentiment
+                  self.data_points = 0
+                  self.numRecs = 0
+                  response = "Okay! Tell me more about movies!"
+                  return response
+              elif input.lower() != 'yes':
+                  response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
+                  maybe = True
+          if self.data_points < 5:
+              if not movie:
+                  emotion_index = self.get_emotion(input)
+                  emotions = ["angry", "scared", "upset", "happy"]
+                  if not emotion_index: 
+                      if input[-1] in string.punctuation: response = input[:-1] + "?" 
+                      else: response = input + "?" 
+                      response+= " Sorry, I don\'t think I understand."
+                  else:
+                    if 3 in emotion_index and len(emotion_index)>1: response = "Sorry to hear you're conflicted!"
+                    elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy!"
+                    else: 
+                      response = "Sorry to hear you're "
+                      first = True
+                      for i in emotion_index:
+                        if not first: response += " and "
+                        response += emotions[i]
+                        first = False
+                      response += "! Please let me know if I can do anything to help!"
+                  response += " Now, could you tell me about a movie that you have seen?"
+              elif movie == 'NO_TITLE':
+                  response = 'Sorry, I\'m not familiar with that title.'
+              else:
+                  response = self.getResponse(sentiment) % orig_movie
+                  if sentiment != 0.0:
+                      self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+                      if self.data_points < 5:
+                          response += 'Tell me about another movie you have seen.'
+          if self.data_points >= 5 and not maybe:
+              response += '\nThat\'s enough for me to make a recommendation.'
+              currRec = self.recommend(self.user_vector)
+              for rec in currRec:
+                  if rec not in self.prevRec:
+                      response += '\nYou should watch ' + rec + '.'
+                      self.prevRec.add(rec)
+                      self.numRecs += 1
+                      break
+              response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
       else:
           orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
           maybe = False
