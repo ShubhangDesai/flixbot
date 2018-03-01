@@ -237,6 +237,33 @@ class Chatbot:
         else: return [i for i, j in enumerate(emotion_scores) if j == m]
 
 
+    def getMovieResponse(self, movie, sentiment, orig_movie):
+        if not movie:
+            response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
+        elif movie == 'NO_TITLE':
+            response = 'Sorry, I\'m not familiar with that title.'
+        else:
+            response = self.getResponse(sentiment) % orig_movie
+            if sentiment != 0.0:
+                self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+                if self.data_points < 5:
+                    response += 'Tell me about another movie you have seen.'
+        return response
+
+    def getMovieRecResponse(self):
+        response = '\nThat\'s enough for me to make a recommendation.'
+        currRec = self.recommend(self.user_vector)
+        for rec in currRec:
+            if rec not in self.prevRec:
+                response += '\nYou should watch ' + rec + '.'
+                self.prevRec.add(rec)
+                self.numRecs += 1
+                break
+        response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
+        return response
+
+
+
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
       that
@@ -302,38 +329,25 @@ class Chatbot:
               response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
       else:
           orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
-          maybe = False
-          if self.data_points >= 5:
+          if self.genState == 'MOVIE':
+              response = self.getMovieResponse(movie, sentiment, orig_movie)
+              if self.data_points >= 5:
+                  self.genState = 'REC'
+                  response += self.getMovieRecResponse()
+                  return response
+          if self.genState == 'REC':
               if input.lower() == 'no' or self.numRecs >= 5:
                   #keeping previous sentiment
                   self.data_points = 0
                   self.numRecs = 0
+                  self.genState = 'MOVIE'
                   response = "Okay! Tell me more about movies!"
                   return response
               elif input.lower() != 'yes':
-                  response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
-                  maybe = True
-          if self.data_points < 5:
-              if not movie:
-                  response = 'Sorry, I don\'t understand. Tell me about a movie that you have seen.'
-              elif movie == 'NO_TITLE':
-                  response = 'Sorry, I\'m not familiar with that title.'
+                  response = "I'm not sure what you said! Please answer \'yes\' or \'no\'"
+                  return response
               else:
-                  response = self.getResponse(sentiment) % orig_movie
-                  if sentiment != 0.0:
-                      self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
-                      if self.data_points < 5:
-                          response += 'Tell me about another movie you have seen.'
-          if self.data_points >= 5 and not maybe:
-              response += '\nThat\'s enough for me to make a recommendation.'
-              currRec = self.recommend(self.user_vector)
-              for rec in currRec:
-                  if rec not in self.prevRec:
-                      response += '\nYou should watch ' + rec + '.'
-                      self.prevRec.add(rec)
-                      self.numRecs += 1
-                      break
-              response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
+                  response = self.getMovieRecResponse()
               
 
       return response
