@@ -227,7 +227,7 @@ class Chatbot:
         r= re.compile(r"^" + re.escape(movie) + r" and the ")
         newList = filter(r.match, lowerList)
         if len(newList)>0: return True
-        r= re.compile(r"^" + re.escape(movie) + r":")
+        r= re.compile(r"^" + re.escape(movie) + r" ?[0-9]?:")
         newList = filter(r.match, lowerList)
         if len(newList)>0: return True
         return False
@@ -243,13 +243,13 @@ class Chatbot:
             if match: # assume that it found date
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
-            if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList:
+            if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList: #LOOK AT THIS KOBY<3
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
-                # movie, dist = self.get_closest(movie.lower(), lowerList)
+                if self.check_partial(movie.lower(), lowerList):
+                    return movie, self.PLACEHOLDER_TITLE, None, None
+                movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
-                    if self.check_partial(movie.lower(), lowerList):
-                        return movie, self.PLACEHOLDER_TITLE, None, None
-                    else: return None, None, None, None  
+                    return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
             else:
@@ -535,6 +535,7 @@ class Chatbot:
                           if len(self.titleDict[movie])==1:
                               date = self.titleDict[movie][0]
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
+                              print(movie)
                               response += "You must be referring to \"" + full_movie +"\"!\n"
                               response += self.getResponse(textSentiment) % full_movie
                           else:
