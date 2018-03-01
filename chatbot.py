@@ -111,7 +111,7 @@ class Chatbot:
             match = re.findall('\(([^A-Za-z]*)\)', lastWord)
             if match: ##assume that it found date
                 date = match[0]
-                movie = movie.rsplit('(', 1)[0]
+                movie = title.rsplit('(', 1)[0]
                 movie += '\"'
         if title.lower() in lowerList:
             capitalTitle = capitalList[lowerList.index(title.lower())]
@@ -164,8 +164,7 @@ class Chatbot:
     ##for disambiguate, consider returning flag for input since input is not needed
     ##     example
     def extract_movie(self, input):
-        ##if quotes
-        if input.count('\"') == 2:
+        if input.count('\"') >= 2:
             movie, input = self.getMovieFromQuotes(input)
             orig_movie = movie
             match = re.findall('\(([^A-Za-z]*)\)', movie)
@@ -195,8 +194,6 @@ class Chatbot:
                             return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date
                     titleTest = oldTitle
         return None, None, None, None
-                
-            
         if input.count('\"') == 2:
             first_quote = input.find('\"') + 1
             second_quote = first_quote + input[first_quote:].find('\"')
@@ -242,22 +239,29 @@ class Chatbot:
             if date:
                 movie = movie + " (" + date + ")"
                 print movie
+            movies, sentiments = [], []
+            while input != None:
+                _, movie, input, _ = self.extract_movie(input)
+                clauses = input.split(" but ")
+
+                pos_neg_count = self.extract_sentiment(clauses[0])
+                movies.append(movie)
+                sentiments.append(pos_neg_count)
+
+                input = None if len(clauses) == 1 else clauses[1]
+
+            return movies, movies, sentiments
         else:
             orig_movie, movie, input = self.starter_extract(input)
-        if not movie and not input:
-            return None, None, None
-        if movie not in self.titleSet:
-            return "NO_TITLE", "NO_TITLE", 0.0
+            if not movie and not input:
+                return None, None, None
 
-        '''firstWord = movie.split()[0]
-        lastWordInd = movie.index(movie.split()[-1])
-        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-            movie = movie.split(' ', 1)[1]  #after article handling, if needed'''
+            if movie not in self.titleSet:
+                return "NO_TITLE", "NO_TITLE", 0.0
 
-        pos_neg_count = self.extract_sentiment(input)
+            pos_neg_count = self.extract_sentiment(input.split(" but ")[0])
 
-        return orig_movie, movie, float(pos_neg_count)
+            return orig_movie, movie, float(pos_neg_count)
 
     def update_user_vector(self, movie, sentiment):
         found_title = False
@@ -363,13 +367,15 @@ class Chatbot:
       #############################################################################
       response = ''
       if self.is_turbo == True:
-          orig_movie, movie, textSentiment = self.get_movie_and_sentiment(input)
-          if textSentiment > 0:
-              sentiment = 1.0
-          elif textSentiment < 0:
-              sentiment = -1.0
-          else:
-              sentiment = 0.0
+          orig_movies, movies, textSentiments = self.get_movie_and_sentiment(input)
+          sentiments = []
+          for textSentiment in textSentiments:
+              if textSentiment > 0:
+                  sentiments.append(1.0)
+              elif textSentiment < 0:
+                  sentiments.append(-1.0)
+              else:
+                  sentiments.append(0.0)
           maybe = False
 
           ##Maybe and No for recommend
@@ -386,34 +392,36 @@ class Chatbot:
 
           ##Getting movies
           if self.data_points < 5:
-              emotion_index = self.get_emotion(input)
-              emotions = ["angry", "scared", "upset", "happy"]
-              response = ""
-              if not emotion_index and not movie: 
-                  if input[-1] in string.punctuation: response = input[:-1] + "?" 
-                  else: response = input + "?" 
-                  response+= " Sorry, I don\'t think I understand. "
-              elif emotion_index:
-                  if 3 in emotion_index and len(emotion_index)>1: response = "Hmmm seems you're conflicted! "
-                  elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy! "
-                  else: 
+              if len(movies) == 0:
+                  emotion_index = self.get_emotion(input)
+                  emotions = ["angry", "scared", "upset", "happy"]
+                  if not emotion_index: 
+                      if input[-1] in string.punctuation: response = input[:-1] + "?" 
+                      else: response = input + "?" 
+                      response+= " Sorry, I don\'t think I understand."
+                  else:
+                    if 3 in emotion_index and len(emotion_index)>1: response = "Sorry to hear you're conflicted!"
+                    elif 3 in emotion_index and len(emotion_index)==1: response="Glad to hear you're happy!"
+                    else: 
                       response = "Sorry to hear you're "
                       first = True
                       for i in emotion_index:
-                          if not first: response += " and "
-                          response += emotions[i]
-                          first = False
-                      response += "! Please let me know if I can do anything to help! "
-              if not movie:
-                  response += "Now, could you tell me about a movie that you have seen?"
-              elif movie == 'NO_TITLE':
+                        if not first: response += " and "
+                        response += emotions[i]
+                        first = False
+                      response += "! Please let me know if I can do anything to help!"
+                  response += " Now, could you tell me about a movie that you have seen?"
+              elif movies == 'NO_TITLE':
                   response = 'Sorry, I\'m not familiar with that title.'
               else:
-                  response += self.getCreativeResponse(textSentiment) % orig_movie
-                  if sentiment != 0.0:
-                      self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
-                      if self.data_points < 5:
-                          response += 'Tell me about another movie you have seen.'
+                  response = ''
+                  for sentiment, orig_movie, movie in zip(sentiments, orig_movies, movies):
+                      response += self.getResponse(sentiment) % orig_movie
+                      if sentiment != 0.0:
+                          self.update_user_vector(movie, sentiment) # uses article-handled "X, The" version for title recognition
+
+                  if self.data_points < 5:
+                      response += 'Tell me about another movie you have seen.'
                           
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
