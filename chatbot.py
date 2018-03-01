@@ -105,10 +105,66 @@ class Chatbot:
     def is_a_movie(self, title):
         capitalList = self.titleDict.keys()
         lowerList = [t.lower() for t in self.titleDict.keys()]
+        if ' ' in title:
+            lastWord = title.rsplit(' ', 1)[-1]
+            lastWord = lastWord[1:-1]
+        else:
+            lastWord = None
+        date = None
         if title.lower() in lowerList:
             capitalTitle = capitalList[lowerList.index(title.lower())]
-            return capitalTitle + " (" + self.titleDict[capitalTitle][0] + ")"
-        return None
+            if len(self.titleDict[capitalTitle]) == 1:
+                date = self.titleDict[capitalTitle][0]
+            else:
+                for currDate in self.titleDict[capitalTitle]:
+                    if currDate == lastWord:
+                        date = currDate
+            return capitalTitle, date
+        firstWord = title.split()[0]
+        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            title = title + ', ' + firstWord
+            title = title.split(' ', 1)[1]  #after article handling, if needed
+            print title
+        if title.lower() in lowerList:
+            capitalTitle = capitalList[lowerList.index(title.lower())]
+            if len(self.titleDict[capitalTitle]) == 1:
+                date = self.titleDict[capitalTitle][0]
+            else:
+                for currDate in self.titleDict[capitalTitle]:
+                    if currDate == lastWord:
+                        date = currDate
+            return capitalTitle, date
+        return None, None
+
+    def getMovieFromQuotes(self, input):
+        if input.count('\"') != 2:
+            return None, None, None
+        first_quote = input.find('\"') + 1
+        second_quote = first_quote + input[first_quote:].find('\"')
+        movie = input[first_quote:second_quote]
+        input = input[:first_quote-2] + input[second_quote+1:]
+        return  movie, input
+
+    def rearrageArt(self, movie, date):
+        if date:
+            lastWordInd = movie.index(movie.split()[-1])
+            if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+                movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
+                movie = movie.split(' ', 1)[1]  #after article handling, if needed
+        else:
+            firstWord = movie.split()[0]
+            if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+                movie = movie + ', ' + firstWord
+                movie = movie.split(' ', 1)[1]  #after article handling, if needed
+        return movie
+
+    def starter_extract(self, input):
+        movie, input = self.getMovieFromQuotes(input)
+        if not movie:
+            return None, None, None
+        orig_movie = movie
+        movie = self.rearrageArt(movie, True)
+        return orig_movie, movie, input
 
     ##returns title and input(with title extracted)
     ##     example: I like Titanic a lot -> Titanic (1997), I like a lot
@@ -116,6 +172,43 @@ class Chatbot:
     ##for disambiguate, consider returning flag for input since input is not needed
     ##     example
     def extract_movie(self, input):
+        ##if quotes
+        if input.count('\"') == 2:
+            movie, input = self.getMovieFromQuotes(input)
+            orig_movie = movie
+            match = re.findall('\(([^A-Za-z]*)\)', movie)
+            date = None
+            if match: ##assume that it found date
+                date = match[0]
+                movie = movie.rsplit('(', 1)[0]
+                movie += '\"'
+            return orig_movie, movie, input, date
+        else:
+            pat = re.compile('([A-Z1-9])')
+            for m in pat.finditer(input):
+                titleTest = input[m.start():]
+                titleTest += ' '
+                while " " in titleTest:
+                    titleTest = titleTest.rsplit(' ', 1)[0]
+                    oldTitle = titleTest
+                    firstWord = titleTest.split()[0]
+                    fullTitle, date = self.is_a_movie(titleTest)
+                    if not fullTitle: ##test for punctuation
+                        titleTest = titleTest.translate(None, string.punctuation)
+                        fullTitle, date = self.is_a_movie(titleTest)
+                    if fullTitle:
+                        if m.start() + len(titleTest) >= len(input):
+                            return oldTitle, fullTitle, input[:m.start()-1], date
+                        else:
+                            return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date
+                    titleTest = oldTitle
+        return None, None, None, None
+                
+            
+            
+            
+
+            
         if input.count('\"') == 2:
             first_quote = input.find('\"') + 1
             second_quote = first_quote + input[first_quote:].find('\"')
@@ -125,47 +218,7 @@ class Chatbot:
                 return movie, input
             elif movie in self.titleDict.keys():
                 return movie + " (" + self.titleDict[movie][0] + ")", input
-        pat = re.compile('([A-Z1-9])')
-        for m in pat.finditer(input):
-            titleTest = input[m.start():]
-            titleTest += ' '
-            while " " in titleTest:
-                titleTest = titleTest.rsplit(' ', 1)[0]
-                oldTitle = titleTest
-                firstWord = titleTest.split()[0]
-                fullTitle = self.is_a_movie(titleTest)
-                if not fullTitle:
-                    titleTest = titleTest.translate(None, string.punctuation)
-                    fullTitle = self.is_a_movie(titleTest)
-                if not fullTitle:
-                    if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-                        titleTest = titleTest + ', ' + firstWord
-                        titleTest = titleTest.split(' ', 1)[1]  #after article handling, if needed
-                        fullTitle = self.is_a_movie(titleTest)
-                if fullTitle:
-                    if m.start() + len(titleTest) >= len(input):
-                        return fullTitle, input[:m.start()-1]
-                    else:
-                        return fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):]
-                titleTest = oldTitle
-        return None, None
-
-    def starter_extract(self, input):
-        if "\"" not in input:
-            return None, None, None
-
-        first_quote = input.find('\"') + 1
-        second_quote = first_quote + input[first_quote:].find('\"')
-        movie = input[first_quote:second_quote]
-        input = input[:first_quote-2] + input[second_quote+1:]
-        orig_movie = movie #before article handling, readable version
- 
-        firstWord = movie.split()[0]
-        lastWordInd = movie.index(movie.split()[-1])
-        if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
-            movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
-            movie = movie.split(' ', 1)[1]  #after article handling, if needed
-        return orig_movie, movie, input
+        
 
     def extract_sentiment(self, input):
         pos_neg_count = 0
@@ -196,8 +249,8 @@ class Chatbot:
 
     def get_movie_and_sentiment(self, input):
         if self.is_turbo == True:
-            movie, input = self.extract_movie(input)
-            orig_movie = movie ##fix orig_movie
+            orig_movie, movie, input, date = self.extract_movie(input)
+            print orig_movie, movie, input, date
 
 
         else:
