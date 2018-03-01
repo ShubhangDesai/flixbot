@@ -149,11 +149,6 @@ class Chatbot:
                         return fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):]
                 titleTest = oldTitle
         return None, None
-                
-
-    def replace_article(self, movie):
-        front = s.rsplit(',', 2)[0]
-        back = s.rsplit(',', 2)[1][1:]
 
     def starter_extract(self, input):
          first_quote = input.find('\"') + 1
@@ -301,7 +296,13 @@ class Chatbot:
       #############################################################################
       response = ''
       if self.is_turbo == True:
-          orig_movie, movie, sentiment = self.get_movie_and_sentiment(input)
+          orig_movie, movie, textSentiment = self.get_movie_and_sentiment(input)
+          if textSentiment > 0:
+              sentiment = 1.0
+          elif textSentiment < 0:
+              sentiment = -1.0
+          else:
+              sentiment = 0.0
           maybe = False
 
           ##Maybe and No for recommend
