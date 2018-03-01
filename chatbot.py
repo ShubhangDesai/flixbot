@@ -530,6 +530,7 @@ class Chatbot:
                               sentiment = 0.0
                       else:
                           full_movie = orig_movie + " (" + date +")"
+                          print orig_movie
                           response += self.getResponse(textSentiment) % full_movie
                           response += 'Tell me about another movie you have seen.'
                       if movie and date:
