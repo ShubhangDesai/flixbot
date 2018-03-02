@@ -417,14 +417,16 @@ class Chatbot:
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
                     dates.append(date)
-                    if print_version: orig_movies.append(print_version)
+                    if movie == self.PLACEHOLDER_TITLE: orig_movies.append(orig_movie)
+                    elif print_version: orig_movies.append(print_version)
                     else: orig_movies.append(self.return_readable(movie))
                     continue
                 elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
-                    if print_version: orig_movies.append(print_version)
+                    if movie == self.PLACEHOLDER_TITLE: orig_movies.append(orig_movie)
+                    elif print_version: orig_movies.append(print_version)
                     else: orig_movies.append(self.return_readable(movie))
                     continue
 
