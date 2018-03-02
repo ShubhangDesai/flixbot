@@ -432,7 +432,8 @@ class Chatbot:
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
-                orig_movies.append(self.return_readable(movie))
+                if movie == self.PLACEHOLDER_TITLE: orig_movies.append(orig_movie)
+                else: orig_movies.append(self.return_readable(movie))
 
 
             return orig_movies, movies, sentiments, dates
