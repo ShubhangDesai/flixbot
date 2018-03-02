@@ -400,7 +400,6 @@ class Chatbot:
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
-                print(features, filter(str.isalnum, features))
                 if filter(str.isalnum, features) == '':
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
@@ -413,7 +412,6 @@ class Chatbot:
                     dates.append(date)
                     orig_movies.append(orig_movie)
                     continue
-
 
                 pos_neg_count = self.extract_sentiment(features)
                 movies.append(movie)
