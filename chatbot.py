@@ -576,7 +576,7 @@ class Chatbot:
                   response = 'Sorry, I\'m not familiar with that title.'
                   self.sentState = 0.0
               else:
-                  for sentiment, orig_movie, movie, date in zip(sentiments, orig_movies, movies, dates):
+                  for textSentiment, sentiment, orig_movie, movie, date in zip(textSentiments, sentiments, orig_movies, movies, dates):
                       full_movie = None
                       if not movie:
                          if self.genState == 'CLARIFY':
