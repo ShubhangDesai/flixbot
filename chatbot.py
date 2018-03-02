@@ -379,7 +379,9 @@ class Chatbot:
         if self.is_turbo == True:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
-                orig_movie, movie, input, date = self.extract_movie(input)
+                orig_movie, movie, input_removed, date = self.extract_movie(input)
+                if not movie:
+                    break
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
                 if movie == self.PLACEHOLDER_TITLE: 
                     movies.append(movie)
@@ -392,11 +394,11 @@ class Chatbot:
                 joins = [' and ', ' but ', ' or ']
                 first_join, first_idx = '', float('Inf')
                 for join in joins:
-                    idx = input.find(join)
+                    idx = input_removed.find(join)
                     if idx != -1 and idx < first_idx:
                         first_join, first_idx = join, idx
 
-                clauses = [input] if first_join == '' else input.split(first_join)
+                clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
