@@ -165,7 +165,7 @@ class Chatbot:
         first_quote = input.find('\"') + 1
         second_quote = first_quote + input[first_quote:].find('\"')
         movie = input[first_quote:second_quote]
-        input = input[:first_quote-2] + input[second_quote+1:]
+        input = input[:first_quote-1] + input[second_quote+1:]
         return movie, input
 
     def rearrageArt(self, movie, date):
@@ -380,28 +380,43 @@ class Chatbot:
         if self.is_turbo == True:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
-                orig_movie, movie, input, date = self.extract_movie(input)
+                orig_movie, movie, input_removed, date = self.extract_movie(input)
+                if not movie:
+                    break
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
                 if movie == self.PLACEHOLDER_TITLE: 
                     movies.append(movie)
                     orig_movies.append(orig_movie)
                     dates.append(None)
                     sentiments.append(0.0)
-                if (not input or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
-                    break
+                # if (not input or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
+                #     break
 
-                joins = [' and ', ' but ']
+                joins = [' and ', ' but ', ' or ']
                 first_join, first_idx = '', float('Inf')
                 for join in joins:
-                    idx = input.find(join)
+                    idx = input_removed.find(join)
                     if idx != -1 and idx < first_idx:
                         first_join, first_idx = join, idx
 
-                clauses = [input] if first_join == '' else input.split(first_join)
+                clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
-                pos_neg_count = self.extract_sentiment(clauses[0])
-                #print(clauses, pos_neg_count, movie)
+                features = clauses[0]
+                if filter(str.isalnum, features) == '':
+                    movies.append(movie)
+                    sentiments.append(sentiments[-1])
+                    dates.append(date)
+                    orig_movies.append(orig_movie)
+                    continue
+                elif filter(str.isalnum, features) == 'not':
+                    movies.append(movie)
+                    sentiments.append(-1 if sentiments[-1] == 1 else 1)
+                    dates.append(date)
+                    orig_movies.append(orig_movie)
+                    continue
+
+                pos_neg_count = self.extract_sentiment(features)
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
