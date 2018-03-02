@@ -246,11 +246,11 @@ class Chatbot:
                 orig_movie = movie.rsplit(' (', 1)[0]
             if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
-                # movie, dist = self.get_closest(movie.lower(), lowerList)
+                if self.check_partial(movie.lower(), lowerList):
+                    return movie, self.PLACEHOLDER_TITLE, None, None
+                movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
-                    if self.check_partial(movie.lower(), lowerList):
-                        return movie, self.PLACEHOLDER_TITLE, None, None
-                    else: return None, None, None, None  
+                    return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
             else:
@@ -544,6 +544,7 @@ class Chatbot:
                           if len(self.titleDict[movie])==1:
                               date = self.titleDict[movie][0]
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
+                              print(movie)
                               response += "You must be referring to \"" + full_movie +"\"!\n"
                               response += self.getResponse(textSentiment) % full_movie
                           else:
