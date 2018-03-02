@@ -397,7 +397,6 @@ class Chatbot:
 
                     clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
                     input_split = [input] if first_join == '' else input.split(first_join)
-
                     if movie in input_split[0]:
                         first_clause = True
                     else:
@@ -877,16 +876,18 @@ class Chatbot:
       7. Understanding references to things said previously
       8. Speaking very fluently
       9. Alternate/foreign titles
+      10. Responding to arbitrary input
       And note that we integrated quite a few of them with each other, as listed below
-      1: Works with 2, 6, 7, 8
-      2: Works with 1, 3, 4, 5, 6, 7, 8, 9
-      3: Works with 2, 4, 6, 8
-      4: Works with 2, 3, 5, 6, 8, 9
-      5: Works with 2, 3, 4, 6, 7, 8, 9
-      6: Works with 1, 2, 3, 4, 5, 7, 8, 9
-      7: Works with 1, 2, 5, 6, 7, 8, 9
-      8: Works with 1, 2, 3, 4, 5, 6, 7, 9
-      9: Works with 1, 2, 4, 5, 6, 7, 8
+      1: Works with 2, 6, 7, 8, 10
+      2: Works with 1, 3, 4, 5, 6, 7, 8, 9, 10
+      3: Works with 2, 4(only works with year disambiguation), 6, 8, 10
+      4: Works with 2, 3(only the year disambiguation part), 5, 6, 8, 9, 10
+      5: Works with 2, 4, 6, 7, 8, 9, 10
+      6: Works with 1, 2, 3, 4, 5, 7, 8, 9, 10
+      7: Works with 1, 2, 5, 6, 7, 8, 9, 10
+      8: Works with 1, 2, 3, 4, 5, 6, 7, 9, 10
+      9: Works with 1, 2, 4, 5, 6, 7, 8, 10
+      10: Works with 1, 2, 3, 4, 5, 6, 7, 8, 9
 
       '''
 
