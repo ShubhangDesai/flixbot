@@ -297,7 +297,7 @@ class Chatbot:
             if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
-                    return movie, self.PLACEHOLDER_TITLE, None, None
+                    return movie, self.PLACEHOLDER_TITLE, input, None
                 orig_name, movie_name, found = self.check_foreign(movie, capitalList)
                 if found: 
                     return orig_name, movie_name, input, date
@@ -382,12 +382,7 @@ class Chatbot:
             while input != "":
                 orig_movie, movie, input_removed, date = self.extract_movie(input)
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
-                if movie == self.PLACEHOLDER_TITLE:
-                    movies.append(movie)
-                    orig_movies.append(orig_movie)
-                    dates.append(None)
-                    sentiments.append(0.0)
-                    continue
+
                 if ((not input_removed and not movie) or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
 
@@ -423,10 +418,12 @@ class Chatbot:
                     continue
 
                 pos_neg_count = self.extract_sentiment(features)
+
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
                 orig_movies.append(orig_movie)
+
 
             return orig_movies, movies, sentiments, dates
         else:
