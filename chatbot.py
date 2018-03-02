@@ -306,7 +306,7 @@ class Chatbot:
                     return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
-                    orig_movie = self.return_readable(movie)
+                    #orig_movie = self.return_readable(movie)
             else:
                 if self.rearrageArt(movie, False).lower() in lowerList:
                     movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
@@ -397,7 +397,7 @@ class Chatbot:
 
                     clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
                     input_split = [input] if first_join == '' else input.split(first_join)
-                    if movie in input_split[0]:
+                    if orig_movie.lower() in input_split[0].lower():
                         first_clause = True
                     else:
                         input_removed = '' if first_join == '' else first_join.join(clauses[1:])
@@ -417,13 +417,13 @@ class Chatbot:
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
                     dates.append(date)
-                    orig_movies.append(orig_movie)
+                    orig_movies.append(self.return_readable(movie))
                     continue
                 elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
-                    orig_movies.append(orig_movie)
+                    orig_movies.append(self.return_readable(movie))
                     continue
 
                 pos_neg_count = self.extract_sentiment(features)
@@ -431,7 +431,8 @@ class Chatbot:
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
-                orig_movies.append(orig_movie)
+                if movie == self.PLACEHOLDER_TITLE: orig_movies.append(orig_movie)
+                else: orig_movies.append(self.return_readable(movie))
 
 
             return orig_movies, movies, sentiments, dates
@@ -647,6 +648,7 @@ class Chatbot:
         1) extract the relevant information and
         2) transform the information into a response to the user
       """
+
       #############################################################################
       # TODO: Implement the extraction and transformation in this method, possibly#
       # calling other functions. Although modular code is not graded, it is       #
@@ -667,13 +669,13 @@ class Chatbot:
 
           ##Maybe and No for recommend
           if self.data_points >= 5:
-              if input.lower() == 'no' or self.numRecs >= 5:
+              if 'no' not in input.lower() or self.numRecs >= 5:
                   #keeping previous sentiment
                   self.data_points = 0
                   self.numRecs = 0
                   response = "Okay! Tell me more about movies!"
                   return response
-              elif input.lower() != 'yes':
+              elif 'yes' not in input.lower(): 
                   response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
                   maybe = True
 
@@ -746,8 +748,8 @@ class Chatbot:
                       if sentiment != 0.0 and movie and date:
                           self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition
                           self.genState = 'MOVIE'
-
-                  response += '\nTell me about another movie you have seen.'
+                  if self.data_points < 5:
+                      response += '\nTell me about another movie you have seen.'
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
