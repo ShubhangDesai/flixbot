@@ -403,13 +403,20 @@ class Chatbot:
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
-                if filter(str.isalnum, features) == '':
+                for additional_clause in clauses[1:]:
+                    _, additional_movie, _, _ = self.extract_movie(additional_clause)
+                    if not additional_movie:
+                        features = features + ' ' + (additional_clause)
+                    else:
+                        break
+
+                if filter(str.isalnum, features) == '' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
                     dates.append(date)
                     orig_movies.append(orig_movie)
                     continue
-                elif filter(str.isalnum, features) == 'not':
+                elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
