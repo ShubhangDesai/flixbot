@@ -454,7 +454,14 @@ class Chatbot:
         response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
         return response
 
-
+    ##IDEASFORSHUBHANG
+    def getFluResponse(self, input):
+        ##Replace "You are" with "I am" (ex. "Screw You" becomes "Screw me?")
+        ##Replace "I" with "you" (ex. "I am stupid" becomes "You are stupid?")
+        ##Respond to "How..." with "I don't know how..."
+        ##Respond to "What is..." with "...is whatever you want it to be"
+        ##etc etc
+        pass
 
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
@@ -498,8 +505,8 @@ class Chatbot:
               emotions = ["angry", "scared", "upset", "happy"]
               response = ""
               if not emotion_index and len(movies)==0: 
-                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?" 
-                  else: response = input + "?" 
+                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?"
+                  else: response = input + "?"
                   response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
                   self.sentState = self.extract_sentiment(input)
                   self.genState = 'REASK'
