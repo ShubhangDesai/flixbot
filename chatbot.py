@@ -405,6 +405,9 @@ class Chatbot:
                 features = clauses[0]
                 if filter(str.isalnum, features) == '':
                     movies.append(movie)
+                    print input
+                    print movie
+                    print sentiments
                     sentiments.append(sentiments[-1])
                     dates.append(date)
                     orig_movies.append(orig_movie)
