@@ -244,7 +244,7 @@ class Chatbot:
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
                 orig_movie = movie.rsplit(' (', 1)[0]
-            if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList:
+            if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 # movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
@@ -254,6 +254,8 @@ class Chatbot:
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
             else:
+                if self.rearrageArt(movie, False).lower() in lowerList:
+                    movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
                 movie = capitalList[lowerList.index(movie.lower())]
             return orig_movie, movie, input, date
         else:
