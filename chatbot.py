@@ -267,11 +267,7 @@ class Chatbot:
             if indx_alias>0:
                 alias_fixed = self.return_readable(whole_title_read[indx_alias+Is_aka: whole_title_read.find(')')])
                 whole_title_read = whole_title_read[:whole_title_read.find('(')+Is_aka] + alias_fixed + whole_title_read[whole_title_read.find(')'):]
-<<<<<<< HEAD
-            return whole_title_read, whole_title, True
-=======
             return whole_title_read, whole_title, True, movie
->>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
         #Foreign    
         r= re.compile(r".*\(( ?a.k.a. ?)?"+ re.escape(formatted_movie) + r"\)")
         newList = filter(r.match, titleList)
@@ -282,13 +278,8 @@ class Chatbot:
             if changed and whole_title_read.find('(a.k.a.')>0: whole_title_read = eng_title + " (a.k.a. "+movie+whole_title_read[whole_title_read.find(')'):]
             elif changed: whole_title_read = eng_title + " ("+movie+whole_title_read[whole_title_read.find(')'):]
             else: whole_title_read = eng_title + whole_title[whole_title.find(' ('):]
-<<<<<<< HEAD
-            return whole_title_read, whole_title, True
-        return None, None, False
-=======
             return whole_title_read, whole_title, True, movie
         return None, None, False, movie
->>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
 
     def extract_movie(self, input):
         capitalList = self.titleDict.keys()
@@ -306,15 +297,6 @@ class Chatbot:
             if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
-<<<<<<< HEAD
-                    return movie, self.PLACEHOLDER_TITLE, input, None
-                orig_name, movie_name, found = self.check_foreign(movie, capitalList)
-                if found: 
-                    return orig_name, movie_name, input, date
-                movie, dist = self.get_closest(movie.lower(), lowerList, date, capitalList)
-                if movie.lower() not in lowerList: ##TEMPFIXNUM1
-                    return None, None, None, None  
-=======
                     return movie, self.PLACEHOLDER_TITLE, input, None, None
                 orig_name, movie_name, found, user_movie = self.check_foreign(movie, capitalList)
                 if found: 
@@ -322,7 +304,6 @@ class Chatbot:
                 movie, dist = self.get_closest(movie.lower(), lowerList, date, capitalList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
                     return None, None, None, None, None
->>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
                     #orig_movie = self.return_readable(movie)
@@ -330,11 +311,7 @@ class Chatbot:
                 if self.rearrageArt(movie, False).lower() in lowerList:
                     movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
                 movie = capitalList[lowerList.index(movie.lower())]
-<<<<<<< HEAD
-            return orig_movie, movie, input, date
-=======
             return orig_movie, movie, input, date, None
->>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
         else:
             pat = re.compile('([A-Z1-9])')
             for m in pat.finditer(input):
