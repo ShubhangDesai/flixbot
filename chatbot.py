@@ -267,7 +267,11 @@ class Chatbot:
             if indx_alias>0:
                 alias_fixed = self.return_readable(whole_title_read[indx_alias+Is_aka: whole_title_read.find(')')])
                 whole_title_read = whole_title_read[:whole_title_read.find('(')+Is_aka] + alias_fixed + whole_title_read[whole_title_read.find(')'):]
+<<<<<<< HEAD
             return whole_title_read, whole_title, True
+=======
+            return whole_title_read, whole_title, True, movie
+>>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
         #Foreign    
         r= re.compile(r".*\(( ?a.k.a. ?)?"+ re.escape(formatted_movie) + r"\)")
         newList = filter(r.match, titleList)
@@ -278,8 +282,13 @@ class Chatbot:
             if changed and whole_title_read.find('(a.k.a.')>0: whole_title_read = eng_title + " (a.k.a. "+movie+whole_title_read[whole_title_read.find(')'):]
             elif changed: whole_title_read = eng_title + " ("+movie+whole_title_read[whole_title_read.find(')'):]
             else: whole_title_read = eng_title + whole_title[whole_title.find(' ('):]
+<<<<<<< HEAD
             return whole_title_read, whole_title, True
         return None, None, False
+=======
+            return whole_title_read, whole_title, True, movie
+        return None, None, False, movie
+>>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
 
     def extract_movie(self, input):
         capitalList = self.titleDict.keys()
@@ -297,6 +306,7 @@ class Chatbot:
             if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
+<<<<<<< HEAD
                     return movie, self.PLACEHOLDER_TITLE, input, None
                 orig_name, movie_name, found = self.check_foreign(movie, capitalList)
                 if found: 
@@ -304,6 +314,15 @@ class Chatbot:
                 movie, dist = self.get_closest(movie.lower(), lowerList, date, capitalList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
                     return None, None, None, None  
+=======
+                    return movie, self.PLACEHOLDER_TITLE, input, None, None
+                orig_name, movie_name, found, user_movie = self.check_foreign(movie, capitalList)
+                if found: 
+                    return user_movie, movie_name, input, date, orig_name
+                movie, dist = self.get_closest(movie.lower(), lowerList, date, capitalList)
+                if movie.lower() not in lowerList: ##TEMPFIXNUM1
+                    return None, None, None, None, None
+>>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
                     #orig_movie = self.return_readable(movie)
@@ -311,7 +330,11 @@ class Chatbot:
                 if self.rearrageArt(movie, False).lower() in lowerList:
                     movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
                 movie = capitalList[lowerList.index(movie.lower())]
+<<<<<<< HEAD
             return orig_movie, movie, input, date
+=======
+            return orig_movie, movie, input, date, None
+>>>>>>> 1fb6c519cb1f40897ed2e2033bb6bba3c5fd690b
         else:
             pat = re.compile('([A-Z1-9])')
             for m in pat.finditer(input):
@@ -333,11 +356,11 @@ class Chatbot:
                             oldTitle = oldTitle.rsplit(' (', 1)[0]
                         oldTitle = oldTitle.rstrip('?:!.,;').title()
                         if m.start() + len(titleTest) >= len(input):
-                            return oldTitle, fullTitle, input[:m.start()-1], date
+                            return oldTitle, fullTitle, input[:m.start()-1], date, None
                         else:
-                            return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date
+                            return oldTitle, fullTitle, input[:(0 if m.start()-1 < 0 else m.start()-1)] + input[m.start()+len(titleTest):], date, None
                     titleTest = oldTitle
-        return None, None, input, None
+        return None, None, input, None, None
         
 
     def extract_sentiment(self, input):
@@ -380,7 +403,7 @@ class Chatbot:
         if self.is_turbo == True:
             orig_movies, movies, sentiments, dates = [], [], [], []
             while input != "":
-                orig_movie, movie, input_removed, date = self.extract_movie(input)
+                orig_movie, movie, input_removed, date, print_version = self.extract_movie(input)
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
 
                 if ((not input_removed and not movie) or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
@@ -407,7 +430,7 @@ class Chatbot:
 
                 features = clauses[0]
                 for additional_clause in clauses[1:]:
-                    _, additional_movie, _, _ = self.extract_movie(additional_clause)
+                    _, additional_movie, _, _, _ = self.extract_movie(additional_clause)
                     if not additional_movie:
                         features = features + ' ' + (additional_clause)
                     else:
@@ -417,13 +440,15 @@ class Chatbot:
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
                     dates.append(date)
-                    orig_movies.append(self.return_readable(movie))
+                    if print_version: orig_movies.append(print_version)
+                    else: orig_movies.append(self.return_readable(movie))
                     continue
                 elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
-                    orig_movies.append(self.return_readable(movie))
+                    if print_version: orig_movies.append(print_version)
+                    else: orig_movies.append(self.return_readable(movie))
                     continue
 
                 pos_neg_count = self.extract_sentiment(features)
@@ -432,6 +457,7 @@ class Chatbot:
                 sentiments.append(pos_neg_count)
                 dates.append(date)
                 if movie == self.PLACEHOLDER_TITLE: orig_movies.append(orig_movie)
+                elif print_version: orig_movies.append(print_version)
                 else: orig_movies.append(self.return_readable(movie))
 
 
