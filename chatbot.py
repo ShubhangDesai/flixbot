@@ -306,7 +306,7 @@ class Chatbot:
                     return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
-                    orig_movie = self.return_readable(movie)
+                    #orig_movie = self.return_readable(movie)
             else:
                 if self.rearrageArt(movie, False).lower() in lowerList:
                     movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
@@ -398,7 +398,7 @@ class Chatbot:
                     clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
                     input_split = [input] if first_join == '' else input.split(first_join)
 
-                    if movie in input_split[0]:
+                    if orig_movie.lower() in input_split[0].lower():
                         first_clause = True
                     else:
                         input_removed = '' if first_join == '' else first_join.join(clauses[1:])
@@ -418,13 +418,13 @@ class Chatbot:
                     movies.append(movie)
                     sentiments.append(sentiments[-1])
                     dates.append(date)
-                    orig_movies.append(orig_movie)
+                    orig_movies.append(self.return_readable(movie))
                     continue
                 elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
-                    orig_movies.append(orig_movie)
+                    orig_movies.append(self.return_readable(movie))
                     continue
 
                 pos_neg_count = self.extract_sentiment(features)
@@ -432,7 +432,7 @@ class Chatbot:
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
-                orig_movies.append(orig_movie)
+                orig_movies.append(self.return_readable(movie))
 
 
             return orig_movies, movies, sentiments, dates
