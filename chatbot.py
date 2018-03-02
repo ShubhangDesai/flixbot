@@ -210,7 +210,6 @@ class Chatbot:
                    self.LD(s[:-1], t[:-1]) + cost])
         return res
 
-    def get_closest(self, movie, movie_list):
     def get_closest(self, movie, movie_list, date, capital_list):
         possible_movie, min_dist, min_hist = '', float('Inf'), float('Inf')
         for i, item in enumerate(movie_list):
