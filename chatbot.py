@@ -220,7 +220,7 @@ class Chatbot:
                     if len(movie) >= 8:
                         if hist_diff <= min_dist and hist_diff <= 5:
                             proper_title = item
-                            if self.rearrageArt(possible_movie, False).lower() in movie_list:
+                            if self.rearrageArt(item, False).lower() in movie_list:
                                 proper_title = capital_list[movie_list.index(self.rearrageArt(item, False).lower())]
                             proper_title = capital_list[movie_list.index(proper_title.lower())]
                             possible_movie = item
@@ -297,7 +297,7 @@ class Chatbot:
             if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
-                    return movie, self.PLACEHOLDER_TITLE, None, None
+                    return movie, self.PLACEHOLDER_TITLE, input, None
                 orig_name, movie_name, found = self.check_foreign(movie, capitalList)
                 if found: 
                     return orig_name, movie_name, input, date
@@ -382,22 +382,28 @@ class Chatbot:
             while input != "":
                 orig_movie, movie, input_removed, date = self.extract_movie(input)
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
-                if movie == self.PLACEHOLDER_TITLE: 
-                    movies.append(movie)
-                    orig_movies.append(orig_movie)
-                    dates.append(None)
-                    sentiments.append(0.0)
-                if (not input_removed or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
+
+                if ((not input_removed and not movie) or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
 
-                joins = [' and ', ' but ', ' or ']
-                first_join, first_idx = '', float('Inf')
-                for join in joins:
-                    idx = input_removed.find(join)
-                    if idx != -1 and idx < first_idx:
-                        first_join, first_idx = join, idx
+                first_clause = False
+                while not first_clause:
+                    joins = [' and ', ' but ', ' or ', '. However ', ' although ', '. Although ', '. However, ']
+                    first_join, first_idx = '', float('Inf')
+                    for join in joins:
+                        idx = input_removed.find(join)
+                        if idx != -1 and idx < first_idx:
+                            first_join, first_idx = join, idx
 
-                clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
+                    clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
+                    input_split = [input] if first_join == '' else input.split(first_join)
+
+                    if movie in input_split[0]:
+                        first_clause = True
+                    else:
+                        input_removed = '' if first_join == '' else first_join.join(clauses[1:])
+                        input= '' if first_join == '' else first_join.join(input_split[1:])
+
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
@@ -422,10 +428,12 @@ class Chatbot:
                     continue
 
                 pos_neg_count = self.extract_sentiment(features)
+
                 movies.append(movie)
                 sentiments.append(pos_neg_count)
                 dates.append(date)
                 orig_movies.append(orig_movie)
+
 
             return orig_movies, movies, sentiments, dates
         else:
