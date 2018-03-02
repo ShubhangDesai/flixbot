@@ -550,14 +550,89 @@ class Chatbot:
         response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
         return response
 
-    ##IDEASFORSHUBHANG
     def getFluResponse(self, input):
-        ##Replace "You are" with "I am" (ex. "Screw You" becomes "Screw me?")
-        ##Replace "I" with "you" (ex. "I am stupid" becomes "You are stupid?")
-        ##Respond to "How..." with "I don't know how..."
-        ##Respond to "What is..." with "...is whatever you want it to be"
-        ##etc etc
-        pass
+        wordArr = re.findall(r"[\w']+|[.,!?;]", input)
+        func = lambda s: s[:1].lower() + s[1:] if s else ''
+        response = ""
+        firstChar = True
+        for w, word in enumerate(wordArr):
+            nextWord = word + " "
+            if word == "I":
+                if firstChar:
+                    nextWord = "You "
+                else:
+                    nextWord = "you "
+            elif word == "you" or word == "You":
+                    nextWord = "Flixbots "
+            elif word == "myself":
+                nextWord = "yourself "
+            elif word == "Myself":
+                nextWord = "Yourself "
+            elif word == "yourself":
+                nextWord = "myself "
+            elif word == "Yourself":
+                nextWord = "Myself"
+            elif word == "my":
+                nextWord = "your "
+            elif word == "My":
+                nextWord = "Your "
+            elif word == "your":
+                nextWord = "my "
+            elif word == "Your":
+                nextWord = "My "
+            elif word == "me":
+                nextWord = "you  "
+            elif word == "Me":
+                nextWord = "you "
+            firstChar = False
+            if word == "?":
+                response = response.rstrip()
+                firstChar = True
+                newWord = ". "
+            if word == ".":
+                response = response.rstrip()
+                firstChar = True
+                newWord = "? "
+            if word == "!":
+                response = response.rstrip()
+                firstChar = True
+                newWord = "! "
+            if word == ",":
+                response = response.rstrip()
+                newWord = ", "
+            response += nextWord
+        response = response.rstrip()
+        if word != "?" and word != "." and word != "!":
+            response += "?"
+            
+        if response.startswith("How ") or response.startswith("how ") or response.startswith("Why ") or response.startswith("why "):
+            response = func(response)
+            response = "I don't know " + response
+            response = response.rstrip(string.punctuation)+"!"
+        elif response.startswith("Do ") or response.startswith("do "):
+            response = response.split("o ", 1)[1]
+            response = response.rstrip(string.punctuation)+"!"
+            response = "I don't know if " + response
+        elif response.startswith("What is ") or response.startswith("what is "):
+            response = func(response)
+            response = response.split("is ", 1)[1]
+            response = response.rstrip(string.punctuation) + " "
+            response = response + "is whatever you want it to be!"
+            response = "%s%s" % (response[0].upper(), response[1:])
+        elif response.startswith("What ") or response.startswith("what "):
+            response = func(response)
+            response = "I don't know " + response
+            response = response.rstrip(string.punctuation)+"!"
+        if response.startswith("Can Flixbots ") or response.startswith("can Flixbots "):
+            response = func(response)
+            response = response.split("Flixbots ", 1)[1]
+            response = response.rstrip(string.punctuation)
+            response = "Flixbots cannot " + response + "!"
+        response = response.replace("You am ", "You are ")
+        response = response.replace("you am ", "you are ")
+        response = response.replace("Am you ", "Are you ")
+        response = response.replace("am you ", "are you ")
+        return response
 
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
@@ -599,10 +674,8 @@ class Chatbot:
           if self.data_points < 5:
               emotion_index = self.get_emotion(input)
               emotions = ["angry", "scared", "upset", "happy"]
-              if not emotion_index and len(movies)==0: 
-                  response = "\n"
-                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?"
-                  else: response = input + "?"
+              if not emotion_index and len(movies)==0:
+                  response = self.getFluResponse(input)
                   response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
                   self.sentState = self.extract_sentiment(input)
                   self.genState = 'REASK'
@@ -797,8 +870,15 @@ class Chatbot:
       8. Speaking very fluently
       9. Alternate/foreign titles
       And note that we integrated quite a few of them with each other, as listed below
-      2,6,8: works with 1-9
-      3 works with missing year
+      1: Works with 2, 6, 7, 8
+      2: Works with 1, 3, 4, 5, 6, 7, 8, 9
+      3: Works with 2, 4, 6, 8
+      4: Works with 2, 3, 5, 6, 8, 9
+      5: Works with 2, 3, 4, 6, 7, 8, 9
+      6: Works with 1, 2, 3, 4, 5, 7, 8, 9
+      7: Works with 1, 2, 5, 6, 7, 8, 9
+      8: Works with 1, 2, 3, 4, 5, 6, 7, 9
+      9: Works with 1, 2, 4, 5, 6, 7, 8
 
       '''
 
