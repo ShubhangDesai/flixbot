@@ -232,9 +232,37 @@ class Chatbot:
         if len(newList)>0: return True
         return False
 
+    def return_readable(self, movie):
+        index = movie.rfind(',')
+        if movie[index+2:] in ["The", "A", "An"]: return movie[index+2:] + " "+ movie[0: index]
+        else: return movie
+
+    def check_foreign(self, movie, titleList):
+        #English part
+        changed=False
+        formatted_movie = self.rearrageArt(movie, None)
+        if formatted_movie!=movie: changed=True
+        r= re.compile(r"^" + re.escape(formatted_movie) + r" ?\(.*\)")
+        newList = filter(r.match, titleList)
+        if len(newList)==1:
+            whole_title, whole_title_read = str(newList[0]), str(newList[0])
+            if changed: whole_title_read = movie+ whole_title[len(movie)+1:]
+            return whole_title_read, whole_title, True
+        #Foreign    
+        r= re.compile(r".*\(( ?a.k.a. ?)?"+ re.escape(formatted_movie) + r"\)")
+        newList = filter(r.match, titleList)
+        if len(newList)==1: 
+            whole_title, whole_title_read = str(newList[0]), str(newList[0])
+            eng_title = whole_title[:whole_title.find(' (')]
+            eng_title = self.return_readable(eng_title)
+            whole_title_read = eng_title + whole_title[whole_title.find(' ('):]
+            return whole_title_read, whole_title, True
+        return None, None, False
+
     def extract_movie(self, input):
         capitalList = self.titleDict.keys()
         lowerList = [t.lower() for t in self.titleDict.keys()]
+
         if input.count('\"') >= 2:
             movie, input = self.getMovieFromQuotes(input)
             orig_movie = movie
@@ -247,6 +275,9 @@ class Chatbot:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
                     return movie, self.PLACEHOLDER_TITLE, None, None
+                orig_name, movie_name, found = self.check_foreign(movie, capitalList)
+                if found: 
+                    return orig_name, movie_name, input, date
                 movie, dist = self.get_closest(movie.lower(), lowerList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
                     return None, None, None, None  
@@ -535,7 +566,6 @@ class Chatbot:
                           if len(self.titleDict[movie])==1:
                               date = self.titleDict[movie][0]
                               full_movie = orig_movie + " (" + self.titleDict[movie][0] +")"
-                              print(movie)
                               response += "You must be referring to \"" + full_movie +"\"!\n"
                               response += self.getResponse(textSentiment) % full_movie
                           else:
@@ -619,7 +649,6 @@ class Chatbot:
                 self.titleDict[newTitle].append(date)
             else:
                 self.titleDict[newTitle] = [date]
-            
       reader = csv.reader(open('data/sentiment.txt', 'rb'))
       tempSentiment = dict(reader)
       self.sentiment = {}
@@ -681,12 +710,19 @@ class Chatbot:
     # 5. Write a description for your chatbot here!                             #
     #############################################################################
     def intro(self):
-      return """
-      Your task is to implement the chatbot as detailed in the PA6 instructions.
-      Remember: in the starter mode, movie names will come in quotation marks and
-      expressions of sentiment will be simple!
-      Write here the description for your own chatbot!
-      """
+      return '''For the creative portion, we implemented the following features:
+      1. Identifying movies without quotation marks or perfect capitalization
+      2. Fine-grained sentiment extraction
+      3. Spell-checking movie titles
+      4. Disambiguating movie titles for series and year ambiguities
+      5. Extracting sentiment with multiple-movie input
+      6. Identifying and responding to emotions
+      7. Understanding references to things said previously
+      8. Speaking very fluently
+      9. Alternate/foreign titles
+      And note that we integrated quite a few of them with each other, as listed below
+      2,6,8: works with 1-9
+      '''
 
 
     #############################################################################
