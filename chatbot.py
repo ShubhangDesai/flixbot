@@ -216,8 +216,8 @@ class Chatbot:
             if abs(len(item) - len(movie)) <= 3:
                 hist = [abs(item.count(let) - movie.count(let)) for let in 'abcdefghijklmnopqrstuvwxyz ']
                 hist_diff = sum(hist)
-                if hist_diff <= 5:
-                    if len(movie) >= 10:
+                if hist_diff <= 7:
+                    if len(movie) >= 9:
                         if hist_diff < min_dist and hist_diff <= 3:
                             possible_movie = item
                             min_dist = hist_diff
@@ -559,8 +559,8 @@ class Chatbot:
           if self.data_points < 5:
               emotion_index = self.get_emotion(input)
               emotions = ["angry", "scared", "upset", "happy"]
-              response = ""
               if not emotion_index and len(movies)==0: 
+                  response = "\n"
                   if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?"
                   else: response = input + "?"
                   response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
@@ -588,6 +588,7 @@ class Chatbot:
               else:
                   for textSentiment, sentiment, orig_movie, movie, date in zip(textSentiments, sentiments, orig_movies, movies, dates):
                       full_movie = None
+                      response +="\n"
                       if not movie:
                          if self.genState == 'CLARIFY':
                              self.update_user_vector(self.movState, self.sentState)
@@ -756,6 +757,8 @@ class Chatbot:
       9. Alternate/foreign titles
       And note that we integrated quite a few of them with each other, as listed below
       2,6,8: works with 1-9
+      3 works with missing year
+
       '''
 
 
