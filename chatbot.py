@@ -648,7 +648,6 @@ class Chatbot:
         1) extract the relevant information and
         2) transform the information into a response to the user
       """
-
       #############################################################################
       # TODO: Implement the extraction and transformation in this method, possibly#
       # calling other functions. Although modular code is not graded, it is       #
@@ -669,13 +668,13 @@ class Chatbot:
 
           ##Maybe and No for recommend
           if self.data_points >= 5:
-              if 'no' not in input.lower() or self.numRecs >= 5:
+              if ('no' in input.lower()) or ('nope' in input.lower()) or ('nah' in input.lower()) or self.numRecs >= 5:
                   #keeping previous sentiment
                   self.data_points = 0
                   self.numRecs = 0
                   response = "Okay! Tell me more about movies!"
                   return response
-              elif 'yes' not in input.lower(): 
+              elif (not 'yes' in input.lower()) and (not 'yea' in input.lower()) and (not 'yeah' in input.lower()) and (not 'okay' in input.lower()) and (not 'sure' in input.lower()): 
                   response += "I'm not sure what you said! Please answer \'yes\' or \'no\'"
                   maybe = True
 
@@ -750,6 +749,7 @@ class Chatbot:
                           self.genState = 'MOVIE'
                   if self.data_points < 5:
                       response += '\nTell me about another movie you have seen.'
+                      
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
