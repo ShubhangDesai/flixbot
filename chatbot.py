@@ -34,6 +34,9 @@ class Chatbot:
       self.recommendingMovies = False
       self.numRecs = 0
 
+      #Kaylie needs all these crazy articles for foreign language article handling:/
+      self.articles = ["an", "the", "a", "le", "la", "les", "des", "das", "i", "de", "die", "der", "un", "en", "une", "el", "den", "il", "lo", "los", "las"]
+
       ##Kaylie needs this as placeholder for partial titles for disambiguate, chosen to not conflict or interfere
       self.PLACEHOLDER_TITLE = "UNKKKPARTIAL"
 
@@ -171,14 +174,17 @@ class Chatbot:
         if date:
             firstWord = movie.split()[0]
             lastWordInd = movie.index(movie.split()[-1])
-            if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            if firstWord.lower() in self.articles:
                 movie = movie[:lastWordInd-1] + ', ' + firstWord + " " + movie[lastWordInd:]
                 movie = movie.split(' ', 1)[1]  #after article handling, if needed
         else:
             firstWord = movie.split()[0]
-            if firstWord.lower() == "an" or firstWord.lower() == "the" or firstWord.lower() == "a":
+            if firstWord.lower() in self.articles:
                 movie = movie + ', ' + firstWord
                 movie = movie.split(' ', 1)[1]  #after article handling, if needed
+            if movie[0:2].lower() == "l'":
+                movie = movie + ', ' +'L\''
+                movie = movie[2:]
         return movie
 
     def starter_extract(self, input):
@@ -234,7 +240,8 @@ class Chatbot:
 
     def return_readable(self, movie):
         index = movie.rfind(',')
-        if movie[index+2:] in ["The", "A", "An"]: return movie[index+2:] + " "+ movie[0: index]
+        if movie[index+2:].lower() in self.articles: return movie[index+2:] + " "+ movie[0: index]
+        if movie[index+2:] == "L\'": return movie[index+2:] + movie[0: index]
         else: return movie
 
     def check_foreign(self, movie, titleList):
@@ -247,6 +254,12 @@ class Chatbot:
         if len(newList)==1:
             whole_title, whole_title_read = str(newList[0]), str(newList[0])
             if changed: whole_title_read = movie+ whole_title[len(movie)+1:]
+            indx_alias = whole_title_read.find('(')
+            if whole_title_read.find('(a.k.a.')>0: Is_aka = len('(a.k.a. ')
+            else: Is_aka = 0
+            if indx_alias>0:
+                alias_fixed = self.return_readable(whole_title_read[indx_alias+Is_aka: whole_title_read.find(')')])
+                whole_title_read = whole_title_read[:whole_title_read.find('(')+Is_aka] + alias_fixed + whole_title_read[whole_title_read.find(')'):]
             return whole_title_read, whole_title, True
         #Foreign    
         r= re.compile(r".*\(( ?a.k.a. ?)?"+ re.escape(formatted_movie) + r"\)")
@@ -255,7 +268,9 @@ class Chatbot:
             whole_title, whole_title_read = str(newList[0]), str(newList[0])
             eng_title = whole_title[:whole_title.find(' (')]
             eng_title = self.return_readable(eng_title)
-            whole_title_read = eng_title + whole_title[whole_title.find(' ('):]
+            if changed and whole_title_read.find('(a.k.a.')>0: whole_title_read = eng_title + " (a.k.a. "+movie+whole_title_read[whole_title_read.find(')'):]
+            elif changed: whole_title_read = eng_title + " ("+movie+whole_title_read[whole_title_read.find(')'):]
+            else: whole_title_read = eng_title + whole_title[whole_title.find(' ('):]
             return whole_title_read, whole_title, True
         return None, None, False
 
