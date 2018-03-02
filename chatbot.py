@@ -388,7 +388,7 @@ class Chatbot:
 
                 first_clause = False
                 while not first_clause:
-                    joins = [' and ', ' but ', ' or ']
+                    joins = [' and ', ' but ', ' or ', '. However ', ' although ', '. Although ', '. However, ']
                     first_join, first_idx = '', float('Inf')
                     for join in joins:
                         idx = input_removed.find(join)
