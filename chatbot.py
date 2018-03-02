@@ -299,6 +299,7 @@ class Chatbot:
                     return None, None, None, None  
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
+                    orig_movie = self.return_readable(movie)
             else:
                 if self.rearrageArt(movie, False).lower() in lowerList:
                     movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
