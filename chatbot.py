@@ -345,7 +345,8 @@ class Chatbot:
         inv = 1
         mult = 1
         for word in input.split(' '):
-            word = word.translate(None, string.punctuation)
+            word = word.rstrip(string.punctuation)
+            word = word.lower()
             if word in self.overstSet:
                 mult += 1
             word = self.p.stem(word)
@@ -415,7 +416,14 @@ class Chatbot:
             if movie not in self.titleSet:
                 return "NO_TITLE", "NO_TITLE", 0.0
 
-            pos_neg_count = self.extract_sentiment(input.split(" but ")[0])
+            pos_neg_count = self.extract_sentiment(input)
+
+            if pos_neg_count > 0.0:
+                pos_neg_count = 1.0
+            elif pos_neg_count < 0.0:
+                pos_neg_count = -1.0
+            else:
+                pos_neg_count = 0.0
 
             return orig_movie, movie, float(pos_neg_count)
 
@@ -437,13 +445,17 @@ class Chatbot:
       if self.is_turbo:
           return self.getCreativeResponse(sentiment)
       else:
+          bigPosSet = []
+          bigNegSet = []
+          bigPosSet.extend(self.posSet + self.posSet2 + self.posSet3)
+          bigNegSet.extend(self.negSet + self.negSet2 + self.negSet3)
           if sentiment == 0.0:
               response = random.sample(self.neutralSet, 1)[0]
           else:
               if sentiment > 0:
-                  response = random.sample(self.posSet, 1)[0]
+                  response = random.sample(bigPosSet, 1)[0]
               else:
-                  response = random.sample(self.negSet, 1)[0]
+                  response = random.sample(bigNegSet, 1)[0]
           return response
 
     def getCreativeResponse(self, sentiment):
@@ -462,10 +474,11 @@ class Chatbot:
         else:
             self.genState = 'CLARIFY'
             response = random.sample(self.neutralSet, 1)[0]
-        if sentiment > 0 and self.emoState == 'happy':
-            response += "Your love for this movie explains why you feel so happy. "
-        elif sentiment < 0 and (self.emoState == "angry" or self.emoState == "upset"):
-            response += "Your hatred for this film explains why you're so " + self.emoState + " and salty. "
+            if sentiment > 0 and self.emoState == 'happy':
+                response += "Your love for this movie explains why you feel so happy. "
+            elif sentiment < 0 and (self.emoState == "angry" or self.emoState == "upset"):
+                response += "Your hatred for this film explains why you're so " + self.emoState + " and salty. "
+                    
         return response
 
     def get_emotion(self, input):
