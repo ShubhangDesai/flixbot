@@ -655,13 +655,14 @@ class Chatbot:
                       else:
                           full_movie = orig_movie + " (" + date +")"
                           response += self.getResponse(textSentiment) % full_movie
-                          response += 'Tell me about another movie you have seen.'
                       if movie and date:
                           self.movState = movie + " (" + date + ")"
                       self.sentState = sentiment
                       if sentiment != 0.0 and movie and date:
                           self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition
                           self.genState = 'MOVIE'
+
+                  response += '\nTell me about another movie you have seen.'
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
