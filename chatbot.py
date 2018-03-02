@@ -220,7 +220,7 @@ class Chatbot:
                     if len(movie) >= 8:
                         if hist_diff <= min_dist and hist_diff <= 5:
                             proper_title = item
-                            if self.rearrageArt(possible_movie, False).lower() in movie_list:
+                            if self.rearrageArt(item, False).lower() in movie_list:
                                 proper_title = capital_list[movie_list.index(self.rearrageArt(item, False).lower())]
                             proper_title = capital_list[movie_list.index(proper_title.lower())]
                             possible_movie = item
