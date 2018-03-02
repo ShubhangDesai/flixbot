@@ -74,7 +74,7 @@ class Chatbot:
 
       self.posSet2 = ['Yea, \"%s\" was a great movie! ', 'Yea, I\'d give \"%s\" at least a 8/10, it was great! ', 'Yea! \"%s\" was definitely very solid. ', 'I also really liked \"%s\". ', 'Totally! \"%s\" was the complete package. ', 'Definitely, \"%s\" was a very good movie. ']
 
-      self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood']
+      self.posSet3 = ['I agree, \"%s\" was a modern masterpiece! ', 'Same, \"%s\" was an instant classic! ', 'Yessss, \"%s\" was life changing! ', 'You have THE BEST opinions on movies, \"%s\" was great! ', 'I feel you,  \"%s\" was just incredible. ', 'Oh yea, \"%s\" was the best movie ever made. ', 'OMG, \"%s\" was soooo sooooo goood. ']
       
       self.negSet = ['Sorry you didn\'t like \"%s\". ', 'Yea, I didn\'t like  \"%s\" either. ', 'Yea, \"%s\" was definitely a bit below average. ', 'I agree, \"%s\" was underwhelming. ', '\"%s\" was not a satifying movie. ', '\"%s\" was definitely not the best movie. ', 'Yea, I\'d give \"%s\" a solid 4/10. ']
       
