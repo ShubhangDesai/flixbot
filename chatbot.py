@@ -403,7 +403,14 @@ class Chatbot:
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
-                if filter(str.isalnum, features) == '':
+                for additional_clause in clauses[1:]:
+                    _, additional_movie, _, _ = self.extract_movie(additional_clause)
+                    if not additional_movie:
+                        features = features + ' ' + (additional_clause)
+                    else:
+                        break
+
+                if filter(str.isalnum, features) == '' and len(sentiments) != 0:
                     movies.append(movie)
                     print input
                     print movie
@@ -412,7 +419,7 @@ class Chatbot:
                     dates.append(date)
                     orig_movies.append(orig_movie)
                     continue
-                elif filter(str.isalnum, features) == 'not':
+                elif filter(str.isalnum, features) == 'not' and len(sentiments) != 0:
                     movies.append(movie)
                     sentiments.append(-1 if sentiments[-1] == 1 else 1)
                     dates.append(date)
@@ -658,13 +665,14 @@ class Chatbot:
                       else:
                           full_movie = orig_movie + " (" + date +")"
                           response += self.getResponse(textSentiment) % full_movie
-                          response += 'Tell me about another movie you have seen.'
                       if movie and date:
                           self.movState = movie + " (" + date + ")"
                       self.sentState = sentiment
                       if sentiment != 0.0 and movie and date:
                           self.update_user_vector(movie + " ("+date+")", sentiment) # uses article-handled "X, The" version for title recognition
                           self.genState = 'MOVIE'
+
+                  response += '\nTell me about another movie you have seen.'
           ##Return recommendation
           if self.data_points >= 5 and not maybe:
               response += '\nThat\'s enough for me to make a recommendation.'
