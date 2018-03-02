@@ -386,14 +386,24 @@ class Chatbot:
                 if ((not input_removed and not movie) or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
 
-                joins = [' and ', ' but ', ' or ']
-                first_join, first_idx = '', float('Inf')
-                for join in joins:
-                    idx = input_removed.find(join)
-                    if idx != -1 and idx < first_idx:
-                        first_join, first_idx = join, idx
+                first_clause = False
+                while not first_clause:
+                    joins = [' and ', ' but ', ' or ']
+                    first_join, first_idx = '', float('Inf')
+                    for join in joins:
+                        idx = input_removed.find(join)
+                        if idx != -1 and idx < first_idx:
+                            first_join, first_idx = join, idx
 
-                clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
+                    clauses = [input_removed] if first_join == '' else input_removed.split(first_join)
+                    input_split = [input] if first_join == '' else input.split(first_join)
+
+                    if movie in input_split[0]:
+                        first_clause = True
+                    else:
+                        input_removed = '' if first_join == '' else first_join.join(clauses[1:])
+                        input= '' if first_join == '' else first_join.join(input_split[1:])
+
                 input = '' if first_join == '' else first_join.join(clauses[1:])
 
                 features = clauses[0]
