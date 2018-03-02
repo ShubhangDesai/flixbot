@@ -382,12 +382,13 @@ class Chatbot:
             while input != "":
                 orig_movie, movie, input_removed, date = self.extract_movie(input)
                 #when there is a title that doesn't exist but is a correct partial starting title for a few movies
-                if movie == self.PLACEHOLDER_TITLE: 
+                if movie == self.PLACEHOLDER_TITLE:
                     movies.append(movie)
                     orig_movies.append(orig_movie)
                     dates.append(None)
                     sentiments.append(0.0)
-                if (not input_removed or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
+                    continue
+                if ((not input_removed and not movie) or not movie) and (not self.genState == "CLARIFY" or not self.is_continuation(input)):
                     break
 
                 joins = [' and ', ' but ', ' or ']
