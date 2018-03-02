@@ -271,7 +271,8 @@ class Chatbot:
             if match: # assume that it found date
                 date = match[0]
                 movie = movie.rsplit(' (', 1)[0]
-            if movie.lower() not in lowerList and self.rearrageArt(movie, False) not in lowerList: #LOOK AT THIS KOBY<3
+                orig_movie = movie.rsplit(' (', 1)[0]
+            if movie.lower() not in lowerList and self.rearrageArt(movie, False).lower() not in lowerList:
                 #when you uncomment this for spellcheck can u make sure it returns original title as movie if not-spellchecked please?:) 
                 if self.check_partial(movie.lower(), lowerList):
                     return movie, self.PLACEHOLDER_TITLE, None, None
@@ -284,6 +285,8 @@ class Chatbot:
                 else:
                     movie = capitalList[lowerList.index(movie.lower())]
             else:
+                if self.rearrageArt(movie, False).lower() in lowerList:
+                    movie = capitalList[lowerList.index(self.rearrageArt(movie, False).lower())]
                 movie = capitalList[lowerList.index(movie.lower())]
             return orig_movie, movie, input, date
         else:
@@ -297,7 +300,7 @@ class Chatbot:
                     firstWord = titleTest.split()[0]
                     fullTitle, date = self.is_a_movie(titleTest)
                     if not fullTitle: ##test for punctuation
-                        titleTest = titleTest.translate(None, string.punctuation)
+                        titleTest = titleTest.rstrip(string.punctuation)
                         fullTitle, date = self.is_a_movie(titleTest)
                     if fullTitle:
                         lastWord = oldTitle.rsplit(' ', 1)[-1]
@@ -427,7 +430,6 @@ class Chatbot:
         else:
             self.genState = 'CLARIFY'
             response = random.sample(self.neutralSet, 1)[0]
-            response += "Or you could..."
         if sentiment > 0 and self.emoState == 'happy':
             response += "Your love for this movie explains why you feel so happy. "
         elif sentiment < 0 and (self.emoState == "angry" or self.emoState == "upset"):
@@ -483,7 +485,14 @@ class Chatbot:
         response += '\nWould you like to hear another recommendation? (Or enter :quit if you\'re done.)'
         return response
 
-
+    ##IDEASFORSHUBHANG
+    def getFluResponse(self, input):
+        ##Replace "You are" with "I am" (ex. "Screw You" becomes "Screw me?")
+        ##Replace "I" with "you" (ex. "I am stupid" becomes "You are stupid?")
+        ##Respond to "How..." with "I don't know how..."
+        ##Respond to "What is..." with "...is whatever you want it to be"
+        ##etc etc
+        pass
 
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
@@ -527,8 +536,8 @@ class Chatbot:
               emotions = ["angry", "scared", "upset", "happy"]
               response = ""
               if not emotion_index and len(movies)==0: 
-                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?" 
-                  else: response = input + "?" 
+                  if input[-1] in string.punctuation and input[-1]!="\"": response = input[:-1] + "?"
+                  else: response = input + "?"
                   response+= " Sorry, I don\'t think I understand. If you mentioned a movie title, could you try repeating it? "
                   self.sentState = self.extract_sentiment(input)
                   self.genState = 'REASK'
