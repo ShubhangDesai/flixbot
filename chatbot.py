@@ -210,17 +210,24 @@ class Chatbot:
                    self.LD(s[:-1], t[:-1]) + cost])
         return res
 
-    def get_closest(self, movie, movie_list):
+    def get_closest(self, movie, movie_list, date, capital_list):
         possible_movie, min_dist, min_hist = '', float('Inf'), float('Inf')
         for i, item in enumerate(movie_list):
             if abs(len(item) - len(movie)) <= 3:
                 hist = [abs(item.count(let) - movie.count(let)) for let in 'abcdefghijklmnopqrstuvwxyz ']
                 hist_diff = sum(hist)
-                if hist_diff <= 5:
-                    if len(movie) >= 10:
-                        if hist_diff < min_dist and hist_diff <= 3:
+                if hist_diff <= 7:
+                    if len(movie) >= 8:
+                        if hist_diff <= min_dist and hist_diff <= 5:
+                            proper_title = item
+                            if self.rearrageArt(possible_movie, False).lower() in movie_list:
+                                proper_title = capital_list[movie_list.index(self.rearrageArt(item, False).lower())]
+                            proper_title = capital_list[movie_list.index(proper_title.lower())]
                             possible_movie = item
                             min_dist = hist_diff
+
+                            if date in self.titleDict[proper_title]:
+                                break
                     else:
                         dist = self.LD(item, movie)
                         if dist < min_dist and dist <= 5:
@@ -294,7 +301,7 @@ class Chatbot:
                 orig_name, movie_name, found = self.check_foreign(movie, capitalList)
                 if found: 
                     return orig_name, movie_name, input, date
-                movie, dist = self.get_closest(movie.lower(), lowerList)
+                movie, dist = self.get_closest(movie.lower(), lowerList, date, capitalList)
                 if movie.lower() not in lowerList: ##TEMPFIXNUM1
                     return None, None, None, None  
                 else:
